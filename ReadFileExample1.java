@@ -74,7 +74,7 @@ int ctr=0;
 				st2[ctr++]=st1;
 			}
 			try {
-				System.out.println(st2[0][1]);
+				//System.out.println(st2[0][1]);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				System.out.println("null");
@@ -111,16 +111,29 @@ int ctr=0;
 		
 		HSSFWorkbook workbook = new HSSFWorkbook();
     	HSSFSheet sheet = workbook.createSheet("Sample sheet"); 
-    	  ArrayList<String> list=new ArrayList<String>();
-    	  Map<String,ArrayList<String>> data = new HashMap<String,ArrayList<String>>();
-    	list.add("hello");
-    	list.add("pagal");
+    	  ArrayList<String> list;
+    	  Map<Integer,ArrayList<String>> data = new HashMap<Integer,ArrayList<String>>();
+    	//list.add("hello");
+    	//list.add("pagal");
+    	  
     	//Map<String, Object[]> data = new HashMap<String, Object[]>();
 	//	data.put("1", new Object[] {"Emp No.", "Name", "Salary"});
-		data.put("1", list);
+		//data.put("1", list);
+    	//System.out.println(ctr);
+		for(int g=0;g<ctr;g++)
+		{  list=new ArrayList<String>();
+		for(String c: st2[g])
+			{System.out.println(c);
+			list.add(c);
+			}
+		data.put(g, list);
+		System.out.println("sdgd---"+list);
+		System.out.println("iugijgiggg----"+data.get(0));
+		//list.removeAll(list);
+		//list.clear();
+		}
+		System.out.println("----->."+data.get(2));
 		
-		
-		//for(String c: st2[0])
 		//{
 			//data.put("2", new Object[] {st2[0][0]});
 			//System.out.println(c);
@@ -129,22 +142,27 @@ int ctr=0;
 		//data.put("3", new Object[] {2d, "Sam", 800000d,50000d});
 		//data.put("4", new Object[] {5d, "Dean", 700000d});
 		
-		Set<String> keyset = data.keySet();
+		Set<Integer> keyset = data.keySet();
+		System.out.println(keyset);
 		int rownum = 0;
-		for (String key : keyset) {
+		for (int key : keyset) {
 			HSSFRow row =  sheet.createRow(rownum++);
+			System.out.println(rownum);
 			ArrayList<String> objArr = data.get(key);
+			System.out.println(data.get((rownum-1)));
+			//for(String c:objArr)
+			//System.out.println(c);
 			int cellnum = 0;
-			for (Object obj : objArr) {
-				HSSFCell cell = row.createCell((short) cellnum++);
-				if(obj instanceof Date) 
-					cell.setCellValue((Date)obj);
-				else if(obj instanceof Boolean)
+			for (String obj : objArr) {
+				HSSFCell cell = row.createCell( (short) cellnum++);
+				if(obj instanceof String) 
+					cell.setCellValue(obj);
+				/*else if(obj instanceof Boolean)
 					cell.setCellValue((Boolean)obj);
 				else if(obj instanceof String)
 					cell.setCellValue((String)obj);
 				else if(obj instanceof Double)
-					cell.setCellValue((Double)obj);
+					cell.setCellValue((Double)obj);*/
 			}
 		}
 		

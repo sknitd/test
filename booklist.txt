@@ -1,0 +1,7 @@
+S.No		Name		Author		Publisher	AccessionNo 
+1.		Gk		M.pandey	Arihant		1234569
+2.		Physics		hc verma	Paperback	5697895
+3.		Chemistry	Rc mukherjee	Arihant		4578201
+4.		Mathematics	Rd sharma	Vb mukherjee	7851245
+5.		Gk2		M.pandey	Arihant		1234548
+6.		physics 2	hc verma	PaperBack	8974521

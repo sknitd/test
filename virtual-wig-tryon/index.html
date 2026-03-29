@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>360° Virtual Wig Try-On</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ── Header ───────────────────────────────────────────────────────── -->
+  <div id="header">
+    <div>
+      <h1>💈 360° Virtual Wig Try-On</h1>
+      <div class="subtitle">Real-time AI face tracking · Full spherical rotation</div>
+    </div>
+    <div class="header-badge">Live AR</div>
+  </div>
+
+  <!-- ── Main Layout ──────────────────────────────────────────────────── -->
+  <div id="app">
+
+    <!-- Camera / AR Viewport -->
+    <section id="camera-section">
+      <div id="video-container">
+
+        <!-- Live camera feed (CSS mirrored) -->
+        <video id="video" playsinline autoplay muted></video>
+
+        <!-- Three.js wig overlay (CSS mirrored to match video) -->
+        <canvas id="wig-canvas"></canvas>
+
+        <!-- Debug mesh overlay -->
+        <canvas id="debug-canvas"></canvas>
+
+        <!-- Capture flash -->
+        <div id="capture-flash"></div>
+
+        <!-- Loading screen -->
+        <div id="loading-overlay">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">
+            <strong>Loading AI Models</strong>
+            Starting face mesh detection…
+          </div>
+        </div>
+
+        <!-- No face detected -->
+        <div id="no-face-overlay">
+          <div class="no-face-icon">👤</div>
+          <div class="no-face-text">No face detected<br>Please face the camera</div>
+        </div>
+
+        <!-- Instructions banner (fades after 6s) -->
+        <div id="instructions">
+          💡 Turn your head in any direction for a full <strong>360°</strong> wig preview
+        </div>
+
+        <!-- 360° rotation ring indicator -->
+        <div id="rotation-indicator">
+          <div class="rotation-ring"></div>
+          <div class="rotation-label">360°</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Control Panel -->
+    <aside id="control-panel">
+
+      <!-- Wig Selection -->
+      <div class="panel-section">
+        <div class="section-title">Choose Wig Style</div>
+        <div id="wig-grid">
+          <!-- Populated by app.js -->
+        </div>
+      </div>
+
+      <!-- Hair Color -->
+      <div class="panel-section">
+        <div class="section-title">Hair Color</div>
+        <div id="color-grid">
+          <!-- Populated by app.js -->
+        </div>
+      </div>
+
+      <!-- Head Pose Stats -->
+      <div class="panel-section">
+        <div class="section-title">Head Pose (360°)</div>
+
+        <div class="pose-gauge">
+          <div class="gauge-header">
+            <span class="gauge-label">Yaw (Left/Right)</span>
+            <span class="gauge-value" id="gauge-yaw-val">0°</span>
+          </div>
+          <div class="gauge-bar">
+            <div class="gauge-fill" id="gauge-yaw-fill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="pose-gauge">
+          <div class="gauge-header">
+            <span class="gauge-label">Pitch (Up/Down)</span>
+            <span class="gauge-value" id="gauge-pitch-val">0°</span>
+          </div>
+          <div class="gauge-bar">
+            <div class="gauge-fill" id="gauge-pitch-fill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="pose-gauge">
+          <div class="gauge-header">
+            <span class="gauge-label">Roll (Tilt)</span>
+            <span class="gauge-value" id="gauge-roll-val">0°</span>
+          </div>
+          <div class="gauge-bar">
+            <div class="gauge-fill" id="gauge-roll-fill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div id="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value" id="stat-yaw">—</span>
+            <span class="stat-label">Yaw</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="stat-pitch">—</span>
+            <span class="stat-label">Pitch</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="stat-roll">—</span>
+            <span class="stat-label">Roll</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="stat-fps">—</span>
+            <span class="stat-label">FPS</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="panel-section">
+        <div class="section-title">Actions</div>
+        <div id="action-buttons">
+          <button id="capture-btn" class="btn btn-primary">
+            📸 Take Photo
+          </button>
+          <button id="mesh-btn" class="btn btn-secondary">
+            Show Face Mesh
+          </button>
+        </div>
+      </div>
+
+      <!-- How to use -->
+      <div class="panel-section">
+        <div class="section-title">How to Use</div>
+        <div style="font-size:0.72rem; color: var(--text-secondary); line-height: 1.6;">
+          <p style="margin-bottom:0.5rem">① Allow camera access when prompted</p>
+          <p style="margin-bottom:0.5rem">② Select a wig style from the gallery</p>
+          <p style="margin-bottom:0.5rem">③ Pick a hair color</p>
+          <p style="margin-bottom:0.5rem">④ Turn your head left, right, up, or down to see the wig from all angles</p>
+          <p>⑤ Click "Take Photo" to save your look</p>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+
+  <!-- ── Capture Preview Modal ─────────────────────────────────────────── -->
+  <div id="capture-output">
+    <img id="capture-img" src="" alt="Your Wig Try-On" />
+    <div class="capture-actions">
+      <a id="capture-download" class="btn btn-primary" download="wig-tryon.png">
+        ⬇ Download
+      </a>
+      <button id="capture-close" class="btn btn-secondary">
+        ✕ Close
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Scripts ───────────────────────────────────────────────────────── -->
+
+  <!-- MediaPipe Face Mesh -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1632261418/camera_utils.js"
+          crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js"
+          crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh.js"
+          crossorigin="anonymous"></script>
+
+  <!-- Three.js r160 -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"
+          crossorigin="anonymous"></script>
+
+  <!-- App modules (order matters) -->
+  <script src="js/wigs.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/tracker.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

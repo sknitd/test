@@ -239,6 +239,8 @@ export function renderSettings() {
           <label class="chk"><input type="checkbox" id="g-qa" ${g.runQa ? "checked" : ""}> Run the QA reviewer before evaluation</label>
           <label class="chk"><input type="checkbox" id="g-fallback" ${g.fallbackToDemo ? "checked" : ""}> If a provider call fails, use the offline generator for that step</label>
           <label class="chk"><input type="checkbox" id="g-follow" ${g.follow ? "checked" : ""}> Preview follows the agents while they work</label>
+          <label class="chk"><input type="checkbox" id="g-stream" ${g.stream !== false ? "checked" : ""}> Stream model output live (code appears as it's written)</label>
+          <label class="chk"><input type="checkbox" id="g-visual" ${g.visualReview !== false ? "checked" : ""}> Visual review: send desktop &amp; phone screenshots to the QA reviewer and evaluator</label>
         </div>
       </div>
       <div class="row-btns"><button class="btn ghost" id="g-reset">Restore defaults</button></div>
@@ -281,6 +283,14 @@ export function renderSettings() {
   };
   $("#g-follow").onchange = (e) => {
     g.follow = e.target.checked;
+    save();
+  };
+  $("#g-stream").onchange = (e) => {
+    g.stream = e.target.checked;
+    save();
+  };
+  $("#g-visual").onchange = (e) => {
+    g.visualReview = e.target.checked;
     save();
   };
   $("#g-reset").onclick = () => {

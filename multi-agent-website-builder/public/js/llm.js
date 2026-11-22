@@ -26,24 +26,63 @@ export function systemPrompt(agent, contractKey) {
   ].join("\n\n");
 }
 
-export async function callProvider(agent, { system, user, messages, maxTokens }) {
+export class ProviderCallError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.status = status;
+  }
+}
+
+/**
+ * Call the agent's provider through the local server.
+ * `user` (string) or `messages` ([{role, content}] where content is a string or
+ * [{type:"text",text} | {type:"image",mediaType,data}]).
+ * With `onDelta`, the answer streams: onDelta({ text }) / onDelta({ thinking }).
+ */
+export async function callProvider(agent, { system, user, messages, maxTokens, onDelta, signal }) {
   const { provider, model } = resolveAgentProvider(agent);
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      provider,
-      model,
-      system,
-      messages: messages || [{ role: "user", content: user }],
-      maxTokens: maxTokens || state.settings.general.maxTokens,
-      temperature: typeof agent.temperature === "number" ? agent.temperature : undefined,
-      effort: agent.effort || undefined,
-    }),
+  const body = JSON.stringify({
+    provider,
+    model,
+    system,
+    messages: messages || [{ role: "user", content: user }],
+    maxTokens: maxTokens || state.settings.general.maxTokens,
+    temperature: typeof agent.temperature === "number" ? agent.temperature : undefined,
+    effort: agent.effort || undefined,
   });
-  const j = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-  if (!res.ok || j.error) throw new Error(j.error || `HTTP ${res.status}`);
-  if (!j.text || !j.text.trim()) throw new Error(`Empty response from ${provider}${j.stopReason ? ` (stop: ${j.stopReason})` : ""}`);
+  let j;
+  if (!onDelta) {
+    const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body, signal });
+    j = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    if (!res.ok || j.error) throw new ProviderCallError(j.error || `HTTP ${res.status}`, res.status);
+  } else {
+    const res = await fetch("/api/chat-stream", { method: "POST", headers: { "Content-Type": "application/json" }, body, signal });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new ProviderCallError(e.error || `HTTP ${res.status}`, res.status);
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf("\n")) !== -1) {
+        const line = buf.slice(0, i).trim();
+        buf = buf.slice(i + 1);
+        if (!line) continue;
+        const ev = JSON.parse(line);
+        if (ev.t === "d") onDelta({ text: ev.text });
+        else if (ev.t === "k") onDelta({ thinking: ev.thinking });
+        else if (ev.t === "done") j = ev;
+        else if (ev.t === "error") throw new ProviderCallError(ev.error, ev.status);
+      }
+    }
+    if (!j) throw new ProviderCallError("The stream ended unexpectedly", 502);
+  }
+  if (!j.text || !j.text.trim()) throw new ProviderCallError(`Empty response from ${provider}${j.stopReason ? ` (stop: ${j.stopReason})` : ""}`, 502);
   return { ...j, provider };
 }
 

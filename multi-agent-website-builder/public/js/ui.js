@@ -104,13 +104,15 @@ export class BuilderUI {
   }
 
   // --------------------------------------------------------------- lifecycle
-  reset(site) {
+  reset(site, note) {
     this.states.clear();
     this.usageByAgent.clear();
     this.stageReached = -1;
+    this.shots = null;
     this.feed.innerHTML = "";
     this.renderRoster();
-    this.log({ agent: { name: "You", color: "#94a3b8", icon: "🧑" }, type: "info", title: "New website request", text: site.prompt });
+    if (note) this.log({ agent: { name: "History", color: "#94a3b8", icon: "🕘" }, type: "info", title: note, text: site.prompt });
+    else this.log({ agent: { name: "You", color: "#94a3b8", icon: "🧑" }, type: "info", title: "New website request", text: site.prompt });
     $("#insp-plan").innerHTML = `<p class="muted">Atlas is planning…</p>`;
     $("#insp-design").innerHTML = `<p class="muted">Waiting for the designer…</p>`;
     $("#insp-eval").innerHTML = `<p class="muted">The evaluator scores the site once it is built.</p>`;
@@ -216,8 +218,46 @@ export class BuilderUI {
           : `<p class="muted">No issues reported.</p>`
       }`;
     }
+    html += this.shotsHtml(site);
     $("#insp-eval").innerHTML = html || `<p class="muted">The evaluator scores the site once it is built.</p>`;
+    this.bindShots();
     if (last) this.showInspector("eval");
+  }
+
+  // Screenshots the QA reviewer and evaluator looked at.
+  renderShots(shots) {
+    this.shots = shots;
+  }
+
+  shotsHtml(site) {
+    const sh = this.shots;
+    if (sh) {
+      const imgs = [...sh.desktop.map((u, i) => [u, `Desktop ${i + 1}`]), ...sh.mobile.map((u, i) => [u, `Phone ${i + 1}`])];
+      return `<h4>What the reviewers saw <small>${imgs.length} screenshots sent to the models</small></h4>
+        <div class="shots">${imgs.map(([u, l]) => `<button type="button" class="shot" data-full="${u}" title="${l} — click to enlarge"><img src="${u}" alt="${l} screenshot"><span>${l}</span></button>`).join("")}</div>`;
+    }
+    if (site.shots?.desktopThumb) {
+      return `<h4>Last screenshots</h4><div class="shots"><button type="button" class="shot" data-full="${site.shots.desktopThumb}"><img src="${site.shots.desktopThumb}" alt="Desktop screenshot"><span>Desktop</span></button>${site.shots.mobileThumb ? `<button type="button" class="shot" data-full="${site.shots.mobileThumb}"><img src="${site.shots.mobileThumb}" alt="Phone screenshot"><span>Phone</span></button>` : ""}</div>`;
+    }
+    return "";
+  }
+
+  bindShots() {
+    for (const b of document.querySelectorAll("#insp-eval .shot")) {
+      b.onclick = () => {
+        const box = document.createElement("div");
+        box.className = "lightbox";
+        box.innerHTML = `<button type="button" aria-label="Close">✕</button><img src="${b.dataset.full}" alt="Screenshot">`;
+        box.onclick = () => box.remove();
+        document.addEventListener("keydown", function esc(e) {
+          if (e.key === "Escape") {
+            box.remove();
+            document.removeEventListener("keydown", esc);
+          }
+        });
+        document.body.appendChild(box);
+      };
+    }
   }
 
   renderUsage() {

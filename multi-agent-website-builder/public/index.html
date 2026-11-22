@@ -15,6 +15,7 @@
       <a href="#agents" data-view="agents">Agents</a>
       <a href="#settings" data-view="settings">Settings</a>
     </nav>
+    <button class="btn sm ghost projects-btn" id="projects-btn" type="button">📁 Projects</button>
     <a class="provider-pill" id="provider-pill" href="#settings"></a>
   </header>
 
@@ -91,10 +92,12 @@
           <button class="itab active" data-insp="plan" type="button">Plan</button>
           <button class="itab" data-insp="design" type="button">Design</button>
           <button class="itab" data-insp="eval" type="button">Evaluation</button>
+          <button class="itab" data-insp="history" type="button">History</button>
         </div>
         <div class="insp" id="insp-plan"><p class="muted">The plan appears here once Atlas has read your brief.</p></div>
         <div class="insp" id="insp-design" hidden><p class="muted">Design tokens appear here.</p></div>
         <div class="insp" id="insp-eval" hidden><p class="muted">The evaluator scores the site once it is built.</p></div>
+        <div class="insp" id="insp-history" hidden></div>
       </aside>
     </section>
 

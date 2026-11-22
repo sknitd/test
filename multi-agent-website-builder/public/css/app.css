@@ -347,3 +347,43 @@ code { font-family: var(--mono); font-size: .9em; background: var(--panel-2); pa
   .stage { padding: 8px; }
   .agent-grid, .prov-grid { grid-template-columns: 1fr; }
 }
+
+/* ------------------------------------------------ projects & history */
+.projects-btn { margin-left: auto; }
+.projects-btn + .provider-pill { margin-left: 0; }
+.proj-name input { width: 100%; font-size: 17px; font-weight: 800; border: 1px solid transparent; background: transparent; border-radius: 8px; padding: .3rem .4rem; margin: 0 0 .5rem -.4rem; }
+.proj-name input:hover, .proj-name input:focus { border-color: var(--line); background: var(--panel-2); outline: none; }
+.flash { font-size: 12px; color: var(--ok); margin: .5rem 0 0; }
+.versions { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.versions li { display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding: .5rem .55rem; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); font-size: 12.5px; }
+.versions li.cur { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 7%, var(--panel-2)); }
+.versions li > div:first-child { min-width: 0; }
+.vlabel { overflow-wrap: anywhere; }
+.versions small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+.vscore.ok { color: var(--ok); font-weight: 700; }
+.vbtns { display: flex; gap: 2px; flex: none; }
+.modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 1rem; background: rgba(10, 12, 24, .5); backdrop-filter: blur(3px); }
+.modal-card { width: min(980px, 100%); max-height: 86vh; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 30px 80px rgba(0, 0, 0, .35); padding: 1.1rem 1.2rem 1.4rem; }
+.modal-card header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .8rem; }
+.modal-card h2 { margin: 0; font-size: 19px; }
+.pj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: .8rem; }
+.pj-card { position: relative; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); overflow: hidden; }
+.pj-card.cur { border-color: var(--brand); }
+.pj-open { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 0 0 .6rem; cursor: pointer; }
+.pj-open img, .pj-ph { display: block; width: 100%; aspect-ratio: 1.6; object-fit: cover; object-position: top; background: var(--panel); border-bottom: 1px solid var(--line); }
+.pj-ph { display: grid; place-items: center; color: var(--muted); font-size: 12px; }
+.pj-open b { display: block; padding: .5rem .7rem 0; font-size: 14px; }
+.pj-open small { display: block; padding: 0 .7rem; color: var(--muted); font-size: 11.5px; }
+.pj-del { position: absolute; top: 6px; right: 6px; background: var(--panel); }
+.pj-new { display: grid; place-items: center; align-content: center; gap: .3rem; min-height: 190px; border-style: dashed; cursor: pointer; font-weight: 700; color: var(--brand); }
+.pj-new span { font-size: 30px; }
+
+/* ------------------------------------------------ reviewer screenshots */
+.shots { display: grid; grid-template-columns: repeat(4, 1fr); gap: .4rem; }
+.shot { position: relative; padding: 0; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: var(--panel-2); cursor: zoom-in; aspect-ratio: .7; }
+.shot img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.shot span { position: absolute; left: 3px; bottom: 3px; font-size: 9.5px; font-weight: 700; background: rgba(0, 0, 0, .6); color: #fff; padding: 1px 5px; border-radius: 4px; }
+.lightbox { position: fixed; inset: 0; z-index: 120; background: rgba(8, 10, 20, .85); display: grid; place-items: center; padding: 2rem; cursor: zoom-out; overflow: auto; }
+.lightbox img { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 20px 60px rgba(0, 0, 0, .5); }
+.lightbox button { position: fixed; top: 14px; right: 18px; font-size: 20px; color: #fff; background: none; border: 0; cursor: pointer; }
+@media (max-width: 760px) { .projects-btn { display: none; } }

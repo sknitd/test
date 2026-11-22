@@ -6,7 +6,8 @@
 
 import { state, sleep, speedFactor, resolveAgentProvider, providerLabel } from "./store.js";
 import { RUBRIC } from "./agents.js";
-import { systemPrompt, callProvider, parseJson, parseSection, extractTag, PLACEHOLDER_RE } from "./llm.js";
+import { systemPrompt, callProvider, parseJson, parseSection, extractTag, PLACEHOLDER_RE, ProviderCallError } from "./llm.js";
+import { captureSite, imageParts } from "./capture.js";
 import { emptySite, normalizeTokens, assembleDocument } from "./site.js";
 import { runChecks } from "./checks.js";
 import * as demo from "./demo.js";
@@ -14,6 +15,22 @@ import * as demo from "./demo.js";
 class Aborted extends Error {}
 
 const SYSTEM_AGENT = { id: "system", name: "System", role: "Fallback", color: "#64748b", icon: "⚙️", think: "", create: "" };
+
+/** Text inside <tag>…</tag> so far (the closing tag may not have streamed yet). */
+function partialTag(text, tag) {
+  const i = text.search(new RegExp(`<${tag}>`, "i"));
+  if (i === -1) return null;
+  const from = i + tag.length + 2;
+  const end = text.toLowerCase().indexOf(`</${tag}>`, from);
+  // drop fences and a half-streamed closing tag such as "</thou"
+  return text.slice(from, end === -1 ? undefined : end).replace(/^\s*```[a-z]*\n?/i, "").replace(/<\/?[a-z]*$/i, "");
+}
+/** Value of a JSON string field so far, e.g. "thoughts", while the JSON is still streaming. */
+function partialJsonField(text, field) {
+  const m = text.match(new RegExp(`"${field}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)`));
+  return m ? m[1].replace(/\\n/g, " ").replace(/\\"/g, '"').replace(/\\(.)/g, "$1") : "";
+}
+const tail = (s, n) => (s.length > n ? "…" + s.slice(-n).replace(/^\S*\s/, "") : s);
 
 const slug = (s) =>
   String(s || "")
@@ -34,6 +51,13 @@ export class Orchestrator {
 
   stop() {
     this.abortFlag = true;
+    this.abortCtrl?.abort(); // cancels in-flight model calls (the server cancels upstream too)
+  }
+
+  begin() {
+    this.running = true;
+    this.abortFlag = false;
+    this.abortCtrl = new AbortController();
   }
 
   check() {
@@ -53,7 +77,7 @@ export class Orchestrator {
    * Run one agent step. `llm` describes the real call; `fallback` produces the
    * offline result. Returns { data, thinking, source }.
    */
-  async step(agent, { contract, user, parse = "json", fallback, label, validate }) {
+  async step(agent, { contract, user, parse = "json", fallback, label, validate, images, onText }) {
     this.check();
     const a = agent || SYSTEM_AGENT;
     const { provider, model } = agent ? resolveAgentProvider(agent) : { provider: "demo", model: "offline" };
@@ -79,9 +103,62 @@ export class Orchestrator {
       if (validate) validate(data);
       return data;
     };
+
+    // Live streaming: model reasoning and the answer appear as they are written.
+    const streaming = state.settings.general.stream !== false;
+    let acc = "";
+    let think = "";
+    let painted = 0;
+    const paint = () => {
+      if (acc) {
+        if (onText) onText(acc);
+        else if (parse === "json") {
+          const t = partialJsonField(acc, "thoughts");
+          if (t) this.canvas.say(a, tail(t, 150), 2500);
+        }
+        this.ui.agentState(a, "working", `writing · ${(acc.length / 1000).toFixed(1)}k chars`);
+      } else if (think) {
+        this.canvas.say(a, "💭 " + tail(think.replace(/\s+/g, " "), 140), 2500);
+        this.ui.agentState(a, "thinking", "reasoning…");
+      }
+    };
+    const onDelta = streaming
+      ? (d) => {
+          if (d.text) acc += d.text;
+          if (d.thinking) think += d.thinking;
+          const now = performance.now();
+          if (now - painted > 110) {
+            painted = now;
+            paint();
+          }
+        }
+      : undefined;
+
+    const call = async (messages) => {
+      acc = "";
+      think = "";
+      try {
+        return await callProvider(a, { system, messages, onDelta, signal: this.abortCtrl?.signal });
+      } catch (e) {
+        if (this.abortFlag || e.name === "AbortError") throw new Aborted("Stopped by user");
+        throw e;
+      }
+    };
+    const firstContent = images?.length ? [{ type: "text", text: user }, ...images] : user;
     try {
-      let res = await callProvider(a, { system, user });
+      let messages = [{ role: "user", content: firstContent }];
+      let res;
+      try {
+        res = await call(messages);
+      } catch (e) {
+        // A model without image input: review from the code alone.
+        if (!(images?.length && e instanceof ProviderCallError && [400, 415, 422].includes(e.status))) throw e;
+        this.ui.log({ agent: a, type: "warn", title: "This model doesn't accept screenshots — reviewing from the code only", text: e.message });
+        messages = [{ role: "user", content: user }];
+        res = await call(messages);
+      }
       this.check();
+      if (onDelta) paint();
       this.ui.usage(a, { provider, model: res.model || model, ms: res.latencyMs, usage: res.usage });
       let data;
       try {
@@ -89,19 +166,16 @@ export class Orchestrator {
       } catch (parseErr) {
         // One corrective retry: show the model its own answer and what was wrong with it.
         this.ui.log({ agent: a, type: "warn", title: "Output rejected — asking for a corrected version", text: parseErr.message });
-        res = await callProvider(a, {
-          system,
-          messages: [
-            { role: "user", content: user },
-            { role: "assistant", content: res.text },
-            { role: "user", content: `Your previous response could not be used: ${parseErr.message}\nReply again with the complete result, following the output contract and project rules exactly.` },
-          ],
-        });
+        res = await call([
+          ...messages,
+          { role: "assistant", content: res.text },
+          { role: "user", content: `Your previous response could not be used: ${parseErr.message}\nReply again with the complete result, following the output contract and project rules exactly.` },
+        ]);
         this.check();
         this.ui.usage(a, { provider, model: res.model || model, ms: res.latencyMs, usage: res.usage });
         data = interpret(res.text);
       }
-      return { data, thinking: res.thinking || "", source: provider };
+      return { data, thinking: res.thinking || "", source: provider, streamed: Boolean(onDelta) };
     } catch (e) {
       if (e instanceof Aborted) throw e;
       this.ui.log({ agent: a, type: "error", title: `${providerLabel(provider)} step failed`, text: e.message });
@@ -111,6 +185,24 @@ export class Orchestrator {
       }
       this.ui.log({ agent: a, type: "warn", title: "Falling back to the offline generator for this step" });
       return { data: fallback(), thinking: "", source: "demo-fallback" };
+    }
+  }
+
+  /** Screenshot the page for the reviewers (null if capture isn't possible). */
+  async screenshots(agent) {
+    if (state.settings.general.visualReview === false) return null;
+    const pid = resolveAgentProvider(agent).provider;
+    if (pid === "demo") return null;
+    try {
+      this.canvas.setCursorState(agent, "taking screenshots");
+      const shots = await captureSite(this.site);
+      this.site.shots = { desktopThumb: shots.desktopThumb, mobileThumb: shots.mobileThumb, at: new Date().toISOString() };
+      this.lastShots = shots;
+      this.ui.renderShots?.(shots);
+      return shots;
+    } catch (e) {
+      this.ui.log({ agent, type: "warn", title: "Couldn't capture screenshots — reviewing from the code only", text: e.message });
+      return null;
     }
   }
 
@@ -132,8 +224,8 @@ export class Orchestrator {
   // ------------------------------------------------------------------ build
 
   async build(prompt) {
-    this.running = true;
-    this.abortFlag = false;
+    this.begin();
+    this.lastAction = { kind: "build", label: "Initial build" };
     this.site = emptySite(prompt);
     this.jsStale = false;
     const site = this.site;
@@ -402,6 +494,41 @@ export class Orchestrator {
       .join("\n\n");
   }
 
+  /** onText handler that renders a developer's section into the canvas while it streams. */
+  liveSection(a, section) {
+    let started = false;
+    return (text) => {
+      const html = partialTag(text, "html");
+      const css = partialTag(text, "css");
+      if (html == null) {
+        const t = partialTag(text, "thoughts");
+        if (t) this.canvas.say(a, tail(t, 150), 2500);
+        return;
+      }
+      if (!started) {
+        started = true;
+        this.code.startTyping(section.id, a);
+        this.canvas.setCursorState(a, `coding · ${section.title}`);
+      }
+      const cut = html.lastIndexOf(">");
+      this.canvas.setSectionHtml(section.id, cut > 0 ? html.slice(0, cut + 1) : "");
+      if (css) this.canvas.setSectionCss(section.id, css.slice(0, css.lastIndexOf("}") + 1));
+      this.code.updateTyping(section.id, { html, css: css || "" });
+      this.canvas.progress(a, css ? 0.97 : Math.min(0.95, html.length / 6000));
+    };
+  }
+
+  /** Put a finished section on the canvas — animated typing only if it wasn't already streamed. */
+  async showSection(a, section, res) {
+    if (res.streamed) {
+      this.canvas.setSectionCss(section.id, res.data.css);
+      this.canvas.setSectionHtml(section.id, res.data.html);
+      this.code.stopTyping(section.id);
+    } else {
+      await this.typeSection(a, section, res.data.html, res.data.css);
+    }
+  }
+
   async typeSection(agent, section, html, css) {
     this.code.startTyping(section.id, agent);
     this.canvas.setSectionCss(section.id, css);
@@ -445,12 +572,13 @@ export class Orchestrator {
           parse: "section",
           label: section.id,
           fallback: () => demo.demoSection(section, site),
+          onText: this.liveSection(a, section),
         });
         this.ui.log({ agent: a, type: "think", title: `Building ${section.title}`, text: res.data.thoughts, reasoning: res.thinking, source: res.source });
         this.ui.agentState(a, "working", `coding ${section.title}`);
         this.canvas.setCursorState(a, `coding · ${section.title}`);
         this.canvas.say(a, res.data.thoughts, 3000);
-        await this.typeSection(a, section, res.data.html, res.data.css);
+        await this.showSection(a, section, res);
         section.html = res.data.html;
         section.css = res.data.css;
         section.notes = res.data.thoughts;
@@ -479,12 +607,22 @@ export class Orchestrator {
       user: `Hooks present in the markup: ${hooks.join(", ") || "none"}\nSection ids: ${site.sections.map((s) => s.id).join(", ")}\n\nDevelopers' notes (honour any hooks or classes they say script.js must add):\n${site.sections.filter((s) => s.notes).map((s) => `- #${s.id}: ${s.notes}`).join("\n") || "none"}\n\nPage markup:\n${html}\n\nSection CSS (look for state classes the script must toggle):\n${site.sections.map((s) => s.css).join("\n")}`,
       parse: "js",
       fallback: () => demo.demoInteraction(),
+      onText: (t) => {
+        const js = partialTag(t, "js");
+        if (js == null) {
+          const th = partialTag(t, "thoughts");
+          if (th) this.canvas.say(a, tail(th, 150), 2500);
+          return;
+        }
+        this.code.jsTyping = { agent: a, js };
+        this.code.touch();
+      },
     });
     this.logResult(a, res, "Interactions wired up");
     this.ui.agentState(a, "working", "writing script.js");
     // type the JS in the code view
     const js = res.data.js;
-    const ticks = speedFactor() ? 30 : 1;
+    const ticks = res.streamed || !speedFactor() ? 1 : 30;
     this.code.jsTyping = { agent: a, js: "" };
     for (let i = 1; i <= ticks; i++) {
       this.check();
@@ -517,6 +655,7 @@ export class Orchestrator {
     if (!agent) return;
     this.canvas.moveTo(agent, site.sections[0].id, { state: "running checks" });
     const checks = await runChecks(this.canvas.doc, site);
+    const shots = await this.screenshots(agent);
     // scan the page top to bottom
     for (const s of site.sections) {
       this.check();
@@ -527,7 +666,8 @@ export class Orchestrator {
     }
     const res = await this.step(agent, {
       contract: "qa",
-      user: `Original request:\n"""${site.prompt}"""\n\nAutomated check results:\n${this.checksText(checks)}\n\nSection ids: ${site.sections.map((s) => s.id).join(", ")}\n\nFull page:\n${assembleDocument(site)}`,
+      images: imageParts(shots),
+      user: `${shots ? "Screenshots of the rendered page (desktop and phone) follow the text — check the visual result, not just the code.\n\n" : ""}Original request:\n"""${site.prompt}"""\n\nAutomated check results:\n${this.checksText(checks)}\n\nSection ids: ${site.sections.map((s) => s.id).join(", ")}\n\nFull page:\n${assembleDocument(site)}`,
       fallback: () => demo.demoQa(site, checks),
     });
     const issues = (Array.isArray(res.data?.issues) ? res.data.issues : []).filter((i) => i && i.issue);
@@ -582,10 +722,11 @@ export class Orchestrator {
           parse: "section",
           label: section.id,
           fallback: () => demo.demoRevise(section, instruction, site),
+          onText: this.liveSection(a, section),
         });
         this.ui.log({ agent: a, type: "create", title: `Revised ${section.title}`, text: res.data.thoughts, reasoning: res.thinking, source: res.source, details: { Instructions: instruction } });
         this.ui.agentState(a, "working", `revising ${section.title}`);
-        await this.typeSection(a, section, res.data.html, res.data.css);
+        await this.showSection(a, section, res);
         section.html = res.data.html;
         section.css = res.data.css;
         section.notes = res.data.thoughts;
@@ -615,6 +756,7 @@ export class Orchestrator {
       this.canvas.clearMarks("badge");
       this.canvas.moveTo(judge, site.sections[0].id, { state: round ? `re-evaluating (round ${round + 1})` : "evaluating" });
       const checks = await runChecks(this.canvas.doc, site);
+      const shots = await this.screenshots(judge);
       for (const s of site.sections) {
         this.check();
         this.canvas.moveTo(judge, s.id, { fx: 0.8, wander: false, state: "scoring" });
@@ -622,7 +764,8 @@ export class Orchestrator {
       }
       const res = await this.step(judge, {
         contract: "evaluator",
-        user: `Original request:\n"""${site.prompt}"""\n\nPlan:\n${JSON.stringify(this.context(), null, 2)}\n\nRubric (0-100 each): ${RUBRIC.map((r) => r.label).join(", ")}\nPass threshold: ${g.evalThreshold}\n\nAutomated check results:\n${this.checksText(checks)}\n\nSection ids: ${site.sections.map((s) => s.id).join(", ")}\n\nFull page:\n${assembleDocument(site)}`,
+        images: imageParts(shots),
+        user: `${shots ? "Screenshots of the rendered page (desktop and phone) follow the text — score what a visitor actually sees.\n\n" : ""}Original request:\n"""${site.prompt}"""\n\nPlan:\n${JSON.stringify(this.context(), null, 2)}\n\nRubric (0-100 each): ${RUBRIC.map((r) => r.label).join(", ")}\nPass threshold: ${g.evalThreshold}\n\nAutomated check results:\n${this.checksText(checks)}\n\nSection ids: ${site.sections.map((s) => s.id).join(", ")}\n\nFull page:\n${assembleDocument(site)}`,
         fallback: () => demo.demoEvaluate(site, checks),
       });
       const ev = this.combineScores(res.data || {}, checks);
@@ -673,12 +816,33 @@ export class Orchestrator {
     };
   }
 
+  // ------------------------------------------------------------------- load
+
+  /** Show a saved site (from project history) without running any agents. */
+  async load(site, note) {
+    if (this.running) return;
+    this.site = structuredClone(site);
+    this.site.guidance ||= [];
+    this.site.evals ||= [];
+    this.jsStale = false;
+    this.lastShots = null;
+    this.code.setSite(this.site);
+    this.canvas.removeCursors();
+    this.canvas.clearMarks();
+    this.ui.reset(this.site, note);
+    this.ui.renderPlan(this.site);
+    this.ui.renderDesign(this.site);
+    this.ui.renderEval(this.site);
+    this.ui.stage("done");
+    await this.canvas.renderFull(this.site);
+  }
+
   // ------------------------------------------------------------------ refine
 
   async refine(request) {
+    this.lastAction = { kind: "refine", label: request };
     if (!this.site?.plan) return this.build(request);
-    this.running = true;
-    this.abortFlag = false;
+    this.begin();
     const site = this.site;
     const t0 = performance.now();
     this.ui.beginRefine(request);

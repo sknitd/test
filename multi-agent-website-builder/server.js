@@ -15,6 +15,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(here, "public");
 const DATA_DIR = process.env.DATA_DIR || path.join(here, "data");
 const STORE = path.join(DATA_DIR, "providers.json");
+const PROJECTS = path.join(DATA_DIR, "projects");
+const VENDOR = { "/vendor/html-to-image.js": path.join(here, "node_modules", "html-to-image", "dist", "html-to-image.js") };
+const MAX_VERSIONS = 40;
 const PORT = Number(process.env.PORT) || 5173;
 const HOST = process.env.HOST || "127.0.0.1";
 
@@ -60,6 +63,106 @@ function publicProviders() {
     };
   }
   return out;
+}
+
+// ---------------------------------------------------------------- projects
+// Each project is one JSON file: { id, name, createdAt, updatedAt, versions: [
+//   { n, label, kind, createdAt, score, site } ] } — `site` is the full workspace.
+
+const validId = (id) => /^[a-z0-9-]{6,48}$/.test(id);
+const projectFile = (id) => path.join(PROJECTS, `${id}.json`);
+async function readProject(id) {
+  if (!validId(id)) throw Object.assign(new Error("Invalid project id"), { status: 400 });
+  try {
+    return JSON.parse(await fs.readFile(projectFile(id), "utf8"));
+  } catch {
+    throw Object.assign(new Error("Project not found"), { status: 404 });
+  }
+}
+async function writeProject(p) {
+  await fs.mkdir(PROJECTS, { recursive: true });
+  p.updatedAt = new Date().toISOString();
+  await fs.writeFile(projectFile(p.id), JSON.stringify(p));
+  return p;
+}
+const versionMeta = ({ site, ...v }) => v;
+function projectSummary(p) {
+  const last = p.versions.at(-1);
+  return {
+    id: p.id,
+    name: p.name,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+    versionCount: p.versions.length,
+    lastScore: last?.score ?? null,
+    thumb: last?.site?.shots?.desktopThumb || null,
+    versions: p.versions.map(versionMeta),
+  };
+}
+async function listProjects() {
+  let files = [];
+  try {
+    files = (await fs.readdir(PROJECTS)).filter((f) => f.endsWith(".json"));
+  } catch {}
+  const out = [];
+  for (const f of files) {
+    try {
+      out.push(projectSummary(JSON.parse(await fs.readFile(path.join(PROJECTS, f), "utf8"))));
+    } catch {}
+  }
+  return out.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+async function handleProjects(req, res, pathname) {
+  if (pathname === "/api/projects" && req.method === "GET") return send(res, 200, { projects: await listProjects() });
+  if (pathname === "/api/projects" && req.method === "POST") {
+    const body = await readJson(req);
+    const now = new Date().toISOString();
+    const p = { id: `p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`, name: String(body.name || "Untitled site").slice(0, 80), createdAt: now, updatedAt: now, versions: [] };
+    await writeProject(p);
+    return send(res, 201, { project: projectSummary(p) });
+  }
+  const m = pathname.match(/^\/api\/projects\/([a-z0-9-]+)(\/versions(?:\/(\d+))?)?$/);
+  if (!m) return null;
+  const [, id, versionsPath, n] = m;
+  if (!versionsPath) {
+    if (req.method === "GET") return send(res, 200, { project: projectSummary(await readProject(id)) });
+    if (req.method === "PATCH") {
+      const p = await readProject(id);
+      const body = await readJson(req);
+      if (typeof body.name === "string" && body.name.trim()) p.name = body.name.trim().slice(0, 80);
+      await writeProject(p);
+      return send(res, 200, { project: projectSummary(p) });
+    }
+    if (req.method === "DELETE") {
+      await readProject(id);
+      await fs.rm(projectFile(id), { force: true });
+      return send(res, 200, { ok: true });
+    }
+  } else if (n) {
+    if (req.method === "GET") {
+      const v = (await readProject(id)).versions.find((x) => x.n === Number(n));
+      if (!v) return send(res, 404, { error: "Version not found" });
+      return send(res, 200, { version: v });
+    }
+  } else if (req.method === "POST") {
+    const p = await readProject(id);
+    const body = await readJson(req, 20 * 1024 * 1024);
+    if (!body.site || typeof body.site !== "object") return send(res, 400, { error: "site is required" });
+    const v = {
+      n: (p.versions.at(-1)?.n || 0) + 1,
+      label: String(body.label || "Update").slice(0, 160),
+      kind: ["build", "refine", "restore"].includes(body.kind) ? body.kind : "build",
+      createdAt: new Date().toISOString(),
+      score: typeof body.score === "number" ? body.score : null,
+      site: body.site,
+    };
+    p.versions.push(v);
+    if (p.versions.length > MAX_VERSIONS) p.versions = p.versions.slice(-MAX_VERSIONS);
+    await writeProject(p);
+    return send(res, 201, { project: projectSummary(p), version: versionMeta(v) });
+  }
+  return send(res, 405, { error: "Method not allowed" });
 }
 
 // ------------------------------------------------------------------- http
@@ -151,6 +254,42 @@ const server = http.createServer(async (req, res) => {
         store[body.provider] = cur;
         await saveStore();
         return send(res, e.status && e.status < 600 ? e.status : 502, { ok: false, error: e.message, providers: publicProviders() });
+      }
+    }
+
+    // Streaming chat: newline-delimited JSON — {"t":"d","text"} / {"t":"k","thinking"}
+    // fragments, then {"t":"done",...result} or {"t":"error",...}.
+    if (pathname === "/api/chat-stream" && req.method === "POST") {
+      const body = await readJson(req);
+      const started = Date.now();
+      const abort = new AbortController();
+      res.on("close", () => {
+        if (!res.writableEnded) abort.abort(); // browser went away (e.g. Stop) — cancel upstream
+      });
+      res.writeHead(200, { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+      const line = (o) => !res.writableEnded && res.write(JSON.stringify(o) + "\n");
+      try {
+        const result = await chat(body.provider, body, store[body.provider] || {}, {
+          signal: abort.signal,
+          onDelta: (d) => line(d.text != null ? { t: "d", text: d.text } : { t: "k", thinking: d.thinking }),
+        });
+        line({ t: "done", ...result, latencyMs: Date.now() - started });
+      } catch (e) {
+        if (!abort.signal.aborted) line({ t: "error", error: e.message || String(e), status: e.status || 500 });
+      }
+      return res.end();
+    }
+
+    if (pathname.startsWith("/api/projects")) {
+      const handled = await handleProjects(req, res, pathname);
+      if (handled !== null) return handled;
+    }
+
+    if (VENDOR[pathname] && req.method === "GET") {
+      try {
+        return send(res, 200, await fs.readFile(VENDOR[pathname]), MIME[".js"]);
+      } catch {
+        return send(res, 404, "Run npm install", "text/plain");
       }
     }
 

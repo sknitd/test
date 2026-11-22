@@ -271,6 +271,7 @@ inline confirmation message. Guard every query against missing elements.
 {"thoughts":"...","summary":"one sentence",
  "issues":[{"sectionId":"id or 'global'","severity":"high|medium|low","issue":"what is wrong","fix":"precise instruction for a developer"}]}
 Only report real problems. Return at most 8 issues, most severe first.
+When screenshots are attached, look for visual problems the code hides: overlapping or cramped elements, text running off the edge, broken alignment, unreadable contrast, awkward phone layouts.
 Review it as a static front-end prototype: forms, cart and checkout are demo-only by design. Never ask for backend, CMS, e-commerce platform or template-language integrations; invented sample details (address, hours, prices) are expected, not issues.`,
 
   evaluator: `Respond with ONLY a JSON object:
@@ -279,6 +280,7 @@ Review it as a static front-end prototype: forms, cart and checkout are demo-onl
  "verdict":"one or two sentences",
  "strengths":["..."],
  "improvements":[{"sectionId":"id","instruction":"precise instruction that would raise the score"}]}
+When screenshots are attached, base visual design and responsiveness on what they show (layout, spacing, overflow, legibility at phone width).
 Score it as a static front-end prototype: demo-only forms/cart/checkout and invented sample details are expected and must not lower the score. Never request backend, CMS, e-commerce platform or template-language integrations. Do penalize leftover placeholders or template syntax.`,
 
   custom_planning: `Respond with ONLY a JSON object:

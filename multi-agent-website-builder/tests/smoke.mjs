@@ -78,6 +78,24 @@ const refined = await page.evaluate(() => ({ bg: window.__orch.site.tokens.bg, f
 console.log("refined:", refined);
 await page.screenshot({ path: path.join(OUT, "5-refined.png") });
 
+// version history: build = v1, refine = v2; reload reopens the project; restore v1
+await page.click('.itab[data-insp="history"]');
+await page.waitForFunction(() => document.querySelectorAll("#insp-history .versions li").length >= 2, null, { timeout: 15000 }).catch(() => fail("versions were not saved"));
+const versions = await page.locator("#insp-history .versions li").count();
+await page.reload();
+await page.waitForFunction(() => window.__orch?.site?.plan, null, { timeout: 15000 }).catch(() => fail("project was not reopened after reload"));
+const reopenedDark = await page.evaluate(() => window.__orch.site.tokens.bg === "#0f1115");
+await page.click('.itab[data-insp="history"]');
+await page.click('#insp-history [data-restore="1"]');
+await page.waitForFunction(() => window.__orch.site.tokens.bg !== "#0f1115", null, { timeout: 15000 }).catch(() => fail("restoring v1 failed"));
+console.log("history:", { versions, reopenedDark, restoredV1: true });
+await page.click("#projects-btn");
+await page.waitForSelector(".pj-card .pj-open");
+const projectCards = await page.locator(".pj-card .pj-open").count();
+await page.screenshot({ path: path.join(OUT, "8-projects.png") });
+await page.keyboard.press("Escape");
+await page.click(".modal [data-close]").catch(() => {});
+
 // interactive preview
 await page.click("#try-btn");
 await page.waitForTimeout(800);
@@ -104,4 +122,5 @@ if (!result.js) fail("no script.js produced");
 if (codeLen < 2000) fail("code view empty");
 if (!refined.faq || refined.bg !== "#0f1115") fail("refine did not apply");
 if (agentCards < 9 || providerCards < 10) fail("agents/settings pages incomplete");
+if (versions < 2 || !reopenedDark || projectCards < 1) fail("projects/history incomplete");
 console.log(`✓ smoke test passed — ${agentCards} agents, ${providerCards} providers, screenshots in ${OUT}`);

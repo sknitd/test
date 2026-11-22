@@ -45,6 +45,25 @@ The Evaluator combines its own judgement with **automated checks** run on the re
 
 Rubric: prompt fidelity, visual design, content, accessibility, responsiveness and code quality, combined into a weighted overall score. If the score is below the threshold (Settings, default 85), the Judge sends targeted instructions back to the developers and scores again. The number of rounds is configurable.
 
+### Live streaming
+
+Model output streams in as it's generated. Developers' HTML renders into the preview section by section while it's being written, and the Code tab shows each agent's caret on the live text. Reasoning summaries (Claude, OpenAI, Gemini, DeepSeek and others) appear in the agents' cursor bubbles. **Stop** cancels the in-flight model calls immediately, so a stopped build stops spending tokens. Turn streaming off in Settings to get one response per call.
+
+### Visual review
+
+Before the QA review and each evaluation, the page is rendered at **1280px** (desktop) and **390px** (phone) and captured as JPEG tiles in the browser with [html-to-image](https://github.com/bubkoo/html-to-image), with web fonts embedded. The tiles are sent to Sentinel and Judge along with the code, so they judge what a visitor actually sees: cramped layouts, overflow, broken alignment. The Evaluation tab shows "What the reviewers saw"; click a tile to enlarge it.
+
+If a model doesn't accept images, the request is resent as text only. A review sends up to 8 tiles, about 1.7k input tokens each on OpenAI. Turn this off in Settings.
+
+### Projects & version history
+
+Every finished build or refine is saved on the server (`data/projects/<id>.json`) as a new **version** of the current project, with its score and a thumbnail.
+
+- **History tab:** rename the project, see every version (label, time, score), **Restore** any version to keep refining from it, or open one in a new tab (↗).
+- **📁 Projects:** browse all projects with thumbnails, open or delete them, or start a new one.
+- The last project you had open reopens automatically when you reload.
+- Choosing **New site** in the prompt box starts a new project. **Refine this site** adds versions to the current one. Up to 40 versions are kept per project.
+
 ### Refining
 
 Once a site is built, the prompt box switches to **Refine this site**. Requests such as "make it dark with a green accent", "add a pricing section" or "remove the team section" go to the planner, which splits them into token changes, new sections, removals and per-section edits for the team. With the offline demo, refinement understands colours, themes, fonts and adding or removing sections. Free-form edits need a real provider.
@@ -106,6 +125,8 @@ public/
   js/codeview.js     code panel with per-agent typing carets
   js/checks.js       automated accessibility / responsiveness / code checks
   js/demo.js         offline stand-in for every agent
+  js/capture.js      desktop/phone screenshots for visual review (html-to-image)
+  js/projects.js     projects, version history, restore
   js/site.js         workspace model, design tokens → CSS, document assembly
   js/llm.js          prompt building, API client, output parsing
   js/ui.js, views.js builder panels, Agents and Settings pages

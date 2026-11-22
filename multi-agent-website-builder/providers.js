@@ -150,9 +150,15 @@ async function readError(res) {
 async function fetchWithTimeout(url, opts = {}, ms = 600_000) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
+  const external = opts.signal;
+  if (external) {
+    if (external.aborted) ctrl.abort();
+    else external.addEventListener("abort", () => ctrl.abort(), { once: true });
+  }
   try {
     return await fetch(url, { ...opts, signal: ctrl.signal });
   } catch (e) {
+    if (e.name === "AbortError" && external?.aborted) throw new ProviderError("Request cancelled", 499);
     if (e.name === "AbortError") throw new ProviderError(`Request timed out after ${ms / 1000}s`, 504);
     throw new ProviderError(`Network error reaching ${new URL(url).host}: ${e.cause?.code || e.message}`, 502);
   } finally {
@@ -200,31 +206,51 @@ async function anthropicTest({ apiKey, baseUrl }) {
   }
 }
 
-async function anthropicChat({ apiKey, baseUrl, model, system, messages, maxTokens, effort }) {
+// Message content may be a string or an array of parts:
+//   { type: "text", text } | { type: "image", mediaType: "image/jpeg", data: "<base64>" }
+const partsOf = (content) => (typeof content === "string" ? [{ type: "text", text: content }] : content || []);
+export const hasImages = (messages) => messages.some((m) => partsOf(m.content).some((p) => p.type === "image"));
+
+function anthropicMessages(messages) {
+  return messages.map((m) => ({
+    role: m.role,
+    content:
+      typeof m.content === "string"
+        ? m.content
+        : partsOf(m.content).map((p) =>
+            p.type === "image" ? { type: "image", source: { type: "base64", media_type: p.mediaType, data: p.data } } : { type: "text", text: p.text },
+          ),
+  }));
+}
+
+async function anthropicChat({ apiKey, baseUrl, model, system, messages, maxTokens, effort, onDelta, signal }) {
   const client = anthropicClient(apiKey, baseUrl);
   const params = {
     model,
     max_tokens: maxTokens || 16000,
     system,
-    messages: messages.map((m) => ({ role: m.role, content: m.content })),
+    messages: anthropicMessages(messages),
   };
   if (ADAPTIVE_RE.test(model)) {
     // Summarized thinking lets the UI show what the agent was reasoning about.
     params.thinking = { type: "adaptive", display: "summarized" };
     if (effort) params.output_config = { effort };
   }
+  // Server-side refusal fallback: if a safety classifier declines, the API
+  // re-runs the request on a fallback model inside the same call.
+  const beta = FALLBACK_MODELS.has(model) ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" } : null;
   try {
     let res;
-    if (FALLBACK_MODELS.has(model)) {
-      // Server-side refusal fallback: if a safety classifier declines, the API
-      // re-runs the request on a fallback model inside the same call.
-      res = await client.beta.messages.create({
-        ...params,
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
-      });
+    if (onDelta) {
+      const stream = beta ? client.beta.messages.stream({ ...params, ...beta }, { signal }) : client.messages.stream(params, { signal });
+      for await (const ev of stream) {
+        if (ev.type !== "content_block_delta") continue;
+        if (ev.delta.type === "text_delta") onDelta({ text: ev.delta.text });
+        else if (ev.delta.type === "thinking_delta" && ev.delta.thinking) onDelta({ thinking: ev.delta.thinking });
+      }
+      res = await stream.finalMessage();
     } else {
-      res = await client.messages.create(params);
+      res = beta ? await client.beta.messages.create({ ...params, ...beta }, { signal }) : await client.messages.create(params, { signal });
     }
     if (res.stop_reason === "refusal") {
       const why = res.stop_details?.explanation || res.stop_details?.category || "no details";
@@ -244,9 +270,38 @@ async function anthropicChat({ apiKey, baseUrl, model, system, messages, maxToke
       usage: { input: res.usage?.input_tokens, output: res.usage?.output_tokens },
     };
   } catch (e) {
+    if (e instanceof ProviderError) throw e;
     throw anthropicError(e);
   }
 }
+
+/** Parse a server-sent-events response body into { event, data } objects. */
+async function* sse(res) {
+  const decoder = new TextDecoder();
+  let buf = "";
+  for await (const chunk of res.body) {
+    buf += decoder.decode(chunk, { stream: true });
+    let i;
+    while ((i = buf.search(/\r?\n\r?\n/)) !== -1) {
+      const raw = buf.slice(0, i);
+      buf = buf.slice(i).replace(/^\r?\n\r?\n/, "");
+      let event = "message";
+      const data = [];
+      for (const line of raw.split(/\r?\n/)) {
+        if (line.startsWith("event:")) event = line.slice(6).trim();
+        else if (line.startsWith("data:")) data.push(line.slice(5).replace(/^ /, ""));
+      }
+      if (data.length) yield { event, data: data.join("\n") };
+    }
+  }
+}
+const tryJson = (s) => {
+  try {
+    return JSON.parse(s);
+  } catch {
+    return null;
+  }
+};
 
 // ------------------------------------------------------- OpenAI-compatible
 
@@ -268,30 +323,77 @@ async function openaiTest({ apiKey, baseUrl, def }) {
   return { ok: true, models, message: `Connected — ${models.length} models available` };
 }
 
-async function openaiChat({ apiKey, baseUrl, model, system, messages, maxTokens, temperature, providerId, def }) {
+const dataUrl = (p) => `data:${p.mediaType};base64,${p.data}`;
+
+async function openaiChat({ apiKey, baseUrl, model, system, messages, maxTokens, temperature, providerId, def, onDelta, signal }) {
   if (def.needsKey && !apiKey) throw new ProviderError("No API key provided.", 400);
   const body = {
     model,
-    messages: [{ role: "system", content: system }, ...messages],
+    messages: [
+      { role: "system", content: system },
+      ...messages.map((m) => ({
+        role: m.role,
+        content:
+          typeof m.content === "string"
+            ? m.content
+            : partsOf(m.content).map((p) => (p.type === "image" ? { type: "image_url", image_url: { url: dataUrl(p) } } : { type: "text", text: p.text })),
+      })),
+    ],
+    max_tokens: maxTokens || 8000,
   };
-  body.max_tokens = maxTokens || 8000;
   if (typeof temperature === "number") body.temperature = temperature;
+  if (onDelta) body.stream = true;
   const headers = { "Content-Type": "application/json", ...bearer(apiKey) };
-  if (providerId === "openrouter") {
-    headers["X-Title"] = "Multi-Agent Website Builder";
-  }
-  const res = await fetchWithTimeout(`${baseUrl}/chat/completions`, { method: "POST", headers, body: JSON.stringify(body) });
+  if (providerId === "openrouter") headers["X-Title"] = "Multi-Agent Website Builder";
+  const res = await fetchWithTimeout(`${baseUrl}/chat/completions`, { method: "POST", headers, body: JSON.stringify(body), signal });
   if (!res.ok) throw new ProviderError(await readError(res), res.status);
-  const j = await res.json();
-  const choice = j.choices?.[0];
-  const msg = choice?.message || {};
-  return {
-    text: typeof msg.content === "string" ? msg.content : (msg.content || []).map((p) => p.text || "").join(""),
-    thinking: msg.reasoning_content || msg.reasoning || "",
-    model: j.model || model,
-    stopReason: choice?.finish_reason,
-    usage: { input: j.usage?.prompt_tokens, output: j.usage?.completion_tokens },
-  };
+
+  if (!onDelta) {
+    const j = await res.json();
+    const choice = j.choices?.[0];
+    const msg = choice?.message || {};
+    return {
+      text: typeof msg.content === "string" ? msg.content : (msg.content || []).map((p) => p.text || "").join(""),
+      thinking: msg.reasoning_content || msg.reasoning || "",
+      model: j.model || model,
+      stopReason: choice?.finish_reason,
+      usage: { input: j.usage?.prompt_tokens, output: j.usage?.completion_tokens },
+    };
+  }
+  // Some servers ignore stream:true and answer with plain JSON.
+  if (!String(res.headers.get("content-type") || "").includes("event-stream")) {
+    const j = await res.json();
+    const msg = j.choices?.[0]?.message || {};
+    const text = typeof msg.content === "string" ? msg.content : "";
+    onDelta({ text });
+    return { text, thinking: msg.reasoning_content || "", model: j.model || model, stopReason: j.choices?.[0]?.finish_reason, usage: { input: j.usage?.prompt_tokens, output: j.usage?.completion_tokens } };
+  }
+  let text = "";
+  let thinking = "";
+  let stopReason;
+  let usage = {};
+  let served = model;
+  for await (const { data } of sse(res)) {
+    if (data === "[DONE]") break;
+    const j = tryJson(data);
+    if (!j) continue;
+    if (j.error) throw new ProviderError(j.error.message || JSON.stringify(j.error), 502);
+    served = j.model || served;
+    const choice = j.choices?.[0];
+    const d = choice?.delta || {};
+    if (d.content) {
+      text += d.content;
+      onDelta({ text: d.content });
+    }
+    const r = d.reasoning_content || d.reasoning;
+    if (typeof r === "string" && r) {
+      thinking += r;
+      onDelta({ thinking: r });
+    }
+    if (choice?.finish_reason) stopReason = choice.finish_reason;
+    if (j.usage) usage = { input: j.usage.prompt_tokens, output: j.usage.completion_tokens };
+  }
+  return { text, thinking, model: served, stopReason, usage };
 }
 
 // ------------------------------------------------------- OpenAI Responses API
@@ -299,22 +401,45 @@ async function openaiChat({ apiKey, baseUrl, model, system, messages, maxTokens,
 
 const OPENAI_EFFORTS = new Set(["low", "medium", "high", "xhigh", "max"]);
 
-async function openaiResponses({ apiKey, baseUrl, model, system, messages, maxTokens, effort }) {
+async function openaiResponses({ apiKey, baseUrl, model, system, messages, maxTokens, effort, onDelta, signal }) {
   if (!apiKey) throw new ProviderError("No API key provided.", 400);
   const body = {
     model,
     instructions: system,
-    input: messages.map((m) => ({ role: m.role, content: m.content })),
+    input: messages.map((m) => ({
+      role: m.role,
+      content:
+        typeof m.content === "string" || m.role === "assistant"
+          ? typeof m.content === "string" ? m.content : partsOf(m.content).map((p) => p.text || "").join("")
+          : partsOf(m.content).map((p) => (p.type === "image" ? { type: "input_image", image_url: dataUrl(p) } : { type: "input_text", text: p.text })),
+    })),
     max_output_tokens: maxTokens || 16000,
   };
   if (OPENAI_EFFORTS.has(effort)) body.reasoning = { effort };
+  if (onDelta) body.stream = true;
   const res = await fetchWithTimeout(`${baseUrl}/responses`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...bearer(apiKey) },
     body: JSON.stringify(body),
+    signal,
   });
   if (!res.ok) throw new ProviderError(await readError(res), res.status);
-  const j = await res.json();
+
+  let j;
+  if (onDelta) {
+    for await (const { data } of sse(res)) {
+      const ev = tryJson(data);
+      if (!ev) continue;
+      if (ev.type === "response.output_text.delta") onDelta({ text: ev.delta });
+      else if (ev.type === "response.reasoning_summary_text.delta") onDelta({ thinking: ev.delta });
+      else if (ev.type === "response.completed" || ev.type === "response.incomplete") j = ev.response;
+      else if (ev.type === "response.failed") throw new ProviderError(ev.response?.error?.message || "OpenAI response failed", 502);
+      else if (ev.type === "error") throw new ProviderError(ev.message || ev.error?.message || "OpenAI stream error", 502);
+    }
+    if (!j) throw new ProviderError("OpenAI stream ended without a completed response", 502);
+  } else {
+    j = await res.json();
+  }
   let text = "";
   let thinking = "";
   for (const item of j.output || []) {
@@ -348,31 +473,53 @@ async function geminiTest({ apiKey, baseUrl }) {
   return { ok: true, models, message: `Connected — ${models.length} models available` };
 }
 
-async function geminiChat({ apiKey, baseUrl, model, system, messages, maxTokens, temperature }) {
+async function geminiChat({ apiKey, baseUrl, model, system, messages, maxTokens, temperature, onDelta, signal }) {
   if (!apiKey) throw new ProviderError("No API key provided.", 400);
   const body = {
     systemInstruction: { parts: [{ text: system }] },
-    contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] })),
+    contents: messages.map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: partsOf(m.content).map((p) => (p.type === "image" ? { inline_data: { mime_type: p.mediaType, data: p.data } } : { text: p.text })),
+    })),
     generationConfig: { maxOutputTokens: maxTokens || 16000 },
   };
   if (typeof temperature === "number") body.generationConfig.temperature = temperature;
-  const res = await fetchWithTimeout(`${baseUrl}/models/${encodeURIComponent(model)}:generateContent`, {
+  const method = onDelta ? "streamGenerateContent?alt=sse" : "generateContent";
+  const res = await fetchWithTimeout(`${baseUrl}/models/${encodeURIComponent(model)}:${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
     body: JSON.stringify(body),
+    signal,
   });
   if (!res.ok) throw new ProviderError(await readError(res), res.status);
-  const j = await res.json();
-  const cand = j.candidates?.[0];
-  if (!cand) throw new ProviderError(`Gemini returned no candidates${j.promptFeedback?.blockReason ? ` (blocked: ${j.promptFeedback.blockReason})` : ""}.`, 422);
-  const parts = cand.content?.parts || [];
-  return {
-    text: parts.filter((p) => !p.thought).map((p) => p.text || "").join(""),
-    thinking: parts.filter((p) => p.thought).map((p) => p.text || "").join("\n"),
-    model,
-    stopReason: cand.finishReason,
-    usage: { input: j.usageMetadata?.promptTokenCount, output: j.usageMetadata?.candidatesTokenCount },
+  let text = "";
+  let thinking = "";
+  let finish;
+  let usage = {};
+  const take = (j) => {
+    const cand = j.candidates?.[0];
+    if (!cand && j.promptFeedback?.blockReason) throw new ProviderError(`Gemini blocked the request (${j.promptFeedback.blockReason}).`, 422);
+    for (const p of cand?.content?.parts || []) {
+      if (!p.text) continue;
+      if (p.thought) {
+        thinking += p.text;
+        onDelta?.({ thinking: p.text });
+      } else {
+        text += p.text;
+        onDelta?.({ text: p.text });
+      }
+    }
+    if (cand?.finishReason) finish = cand.finishReason;
+    if (j.usageMetadata) usage = { input: j.usageMetadata.promptTokenCount, output: j.usageMetadata.candidatesTokenCount };
   };
+  if (onDelta) {
+    for await (const { data } of sse(res)) {
+      const j = tryJson(data);
+      if (j) take(j);
+    }
+  } else take(await res.json());
+  if (!text && !finish) throw new ProviderError("Gemini returned no candidates.", 422);
+  return { text, thinking, model, stopReason: finish, usage };
 }
 
 // ---------------------------------------------------------------- dispatch
@@ -385,16 +532,29 @@ export async function testProvider(providerId, stored = {}) {
   return openaiTest(args);
 }
 
-export async function chat(providerId, cfg = {}, stored = {}) {
+/**
+ * Run one chat request. With `onDelta`, the response is streamed and each text /
+ * thinking fragment is passed to it as it arrives; the full result is returned
+ * at the end either way.
+ */
+export async function chat(providerId, cfg = {}, stored = {}, { onDelta, signal } = {}) {
   const { def, apiKey, baseUrl } = resolve(providerId, cfg, stored);
   const model = (cfg.model || "").trim() || (stored.model || "").trim() || def.defaultModel;
   if (!model) throw new ProviderError("No model configured for this provider.", 400);
   if (!cfg.system || !Array.isArray(cfg.messages) || cfg.messages.length === 0) {
     throw new ProviderError("system and messages are required.", 400);
   }
-  const args = { ...cfg, apiKey, baseUrl, def, providerId, model };
-  if (def.kind === "anthropic") return anthropicChat(args);
-  if (def.kind === "gemini") return geminiChat(args);
-  if (def.kind === "openai") return openaiResponses(args);
-  return openaiChat(args);
+  const args = { ...cfg, apiKey, baseUrl, def, providerId, model, onDelta, signal };
+  const run = (a) => (def.kind === "anthropic" ? anthropicChat(a) : def.kind === "gemini" ? geminiChat(a) : def.kind === "openai" ? openaiResponses(a) : openaiChat(a));
+  try {
+    return await run(args);
+  } catch (e) {
+    // A server that doesn't support streaming: answer once without it.
+    if (onDelta && e instanceof ProviderError && [400, 404, 422].includes(e.status) && /stream/i.test(e.message)) {
+      const res = await run({ ...args, onDelta: undefined });
+      onDelta({ text: res.text });
+      return res;
+    }
+    throw e;
+  }
 }

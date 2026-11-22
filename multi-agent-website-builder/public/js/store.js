@@ -16,6 +16,8 @@ export const DEFAULT_GENERAL = {
   fallbackToDemo: true, // if a provider call fails, use the offline generator for that step
   runQa: true,
   maxTokens: 16000,
+  stream: true, // show model output live as it's generated
+  visualReview: true, // send desktop + phone screenshots to the QA reviewer and evaluator
 };
 
 function safeGet(key) {

@@ -5,6 +5,7 @@ import { BuilderUI } from "./ui.js";
 import { Orchestrator } from "./orchestrator.js";
 import { renderAgents, renderSettings, refreshProviders } from "./views.js";
 import { assembleDocument } from "./site.js";
+import { Projects, openSiteInNewTab } from "./projects.js";
 
 const $ = (s) => document.querySelector(s);
 
@@ -80,6 +81,7 @@ $("#composer").addEventListener("submit", async (e) => {
   const text = promptEl.value.trim();
   if (!text || orch.running) return;
   const mode = document.querySelector('input[name="mode"]:checked')?.value || "new";
+  if (mode !== "refine" || !orch.site?.plan) projects.startNew(); // a new site becomes a new project
   setRunning(true);
   promptEl.value = "";
   if (mode === "refine" && orch.site?.plan) await orch.refine(text);
@@ -90,17 +92,48 @@ promptEl.addEventListener("keydown", (e) => {
 });
 stopBtn.addEventListener("click", () => orch.stop());
 
-document.addEventListener("build-finished", (e) => {
-  setRunning(false);
-  const hasSite = !!e.detail.site?.plan && e.detail.site.sections.some((s) => s.html);
+const DEFAULT_PLACEHOLDER = promptEl.placeholder;
+function setHasSite(hasSite) {
   $("#mode-row").hidden = !hasSite;
   if (hasSite) {
     document.querySelector('input[name="mode"][value="refine"]').checked = true;
     promptEl.placeholder = "Ask for changes, e.g. “make it dark with a green accent” or “add a pricing section” — or switch to New site.";
+  } else {
+    document.querySelector('input[name="mode"][value="new"]').checked = true;
+    promptEl.placeholder = DEFAULT_PLACEHOLDER;
   }
-  for (const b of document.querySelectorAll("[data-needs-site]")) b.disabled = !hasSite;
+  for (const b of document.querySelectorAll("[data-needs-site]")) b.disabled = !hasSite || orch.running;
+}
+
+document.addEventListener("build-finished", (e) => {
+  setRunning(false);
+  const site = e.detail.site;
+  const hasSite = !!site?.plan && site.sections.some((s) => s.html);
+  setHasSite(hasSite);
+  if (hasSite && !e.detail.failed) projects.saveVersion(site, orch.lastAction);
   promptEl.focus();
 });
+
+// ----------------------------------------------------------------- projects
+const projects = new Projects({
+  orch,
+  onOpened: (has) => setHasSite(has),
+  onNew: () => {
+    orch.site = null;
+    code.setSite(null);
+    canvas.removeCursors();
+    canvas.idle();
+    $("#feed").innerHTML = "";
+    ui.renderPipeline(null);
+    $("#insp-plan").innerHTML = `<p class="muted">The plan appears here once Atlas has read your brief.</p>`;
+    $("#insp-design").innerHTML = `<p class="muted">Design tokens appear here.</p>`;
+    $("#insp-eval").innerHTML = `<p class="muted">The evaluator scores the site once it is built.</p>`;
+    setHasSite(false);
+    promptEl.focus();
+  },
+});
+window.__projects = projects;
+projects.init();
 
 // ------------------------------------------------------------- stage tools
 const codeWrap = $("#code-wrap");
@@ -138,13 +171,7 @@ function setLive(on) {
 }
 $("#try-btn").addEventListener("click", () => setLive(live.hidden));
 
-$("#open-btn").addEventListener("click", () => {
-  const w = window.open("", "_blank");
-  if (!w) return alert("Pop-up blocked — allow pop-ups to open the preview.");
-  const doc = assembleDocument(orch.site).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-  w.document.write(`<!doctype html><meta charset="utf-8"><title>${orch.site.plan.siteName} — preview</title><style>html,body{margin:0;height:100%}iframe{border:0;width:100%;height:100%;display:block}</style><iframe sandbox="allow-scripts allow-forms allow-popups" srcdoc="${doc}"></iframe>`);
-  w.document.close();
-});
+$("#open-btn").addEventListener("click", () => openSiteInNewTab(orch.site, `${orch.site.plan.siteName} — preview`));
 
 $("#download-btn").addEventListener("click", () => {
   const html = assembleDocument(orch.site);

@@ -1,0 +1,30 @@
+name: MagicForge
+
+on:
+  push:
+    branches: ["ccr-98b7fad9-jid67a"]
+    paths: ["MagicForge/**", ".github/workflows/magicforge.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: magicforge-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline-check:
+    runs-on: macos-14
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: MagicForge
+    steps:
+      - uses: actions/checkout@v4
+      - name: Environment
+        run: |
+          sw_vers
+          uname -m
+          xcodebuild -version
+          swift --version
+          ls /Applications | grep -i xcode || true
+      - name: Build portable core
+        run: MF_ONLY=MFCore swift build

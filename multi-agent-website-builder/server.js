@@ -171,7 +171,21 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-await loadStore();
-server.listen(PORT, HOST, () => {
-  console.log(`\n  Multi-Agent Website Builder running at http://${HOST}:${PORT}\n`);
-});
+// Node's built-in fetch ignores HTTPS_PROXY unless NODE_USE_ENV_PROXY=1 is set at
+// startup. Behind a proxy (corporate networks, cloud sandboxes), restart this
+// process with it enabled so provider calls go through the proxy.
+const proxied = process.env.HTTPS_PROXY || process.env.https_proxy || process.env.HTTP_PROXY || process.env.http_proxy;
+if (proxied && !process.env.NODE_USE_ENV_PROXY) {
+  const { spawn } = await import("node:child_process");
+  const child = spawn(process.execPath, [...process.execArgv, ...process.argv.slice(1)], {
+    stdio: "inherit",
+    env: { ...process.env, NODE_USE_ENV_PROXY: "1" },
+  });
+  for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => child.kill(sig));
+  child.on("exit", (code) => process.exit(code ?? 0));
+} else {
+  await loadStore();
+  server.listen(PORT, HOST, () => {
+    console.log(`\n  Multi-Agent Website Builder running at http://${HOST}:${PORT}${proxied ? " (using HTTPS proxy)" : ""}\n`);
+  });
+}

@@ -91,6 +91,7 @@ If a provider call fails or returns output that can't be parsed, that one step f
 - The builder canvas is a sandboxed iframe **without scripts**, so generated code can't touch the app. **▶ Try it** and **Open ↗** run the site's JavaScript in a sandbox with an opaque origin, which can't reach the builder, its storage or its API.
 - The API only accepts `application/json` requests. Cross-origin pages, including the sandboxed preview, can't call it without a CORS preflight, and the server never approves one.
 - The server listens on `127.0.0.1` by default (`HOST` and `PORT` env vars).
+- **Behind a proxy:** when `HTTPS_PROXY` is set, the server restarts itself with `NODE_USE_ENV_PROXY=1`, because Node's built-in `fetch` otherwise ignores the proxy. Provider calls then go through it, which is needed on corporate networks and in sandboxes that inject API keys at the proxy.
 
 ## Project layout
 

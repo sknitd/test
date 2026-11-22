@@ -112,6 +112,10 @@ public/
 tests/smoke.mjs      headless end-to-end test (npm test)
 ```
 
+## Example: a real build
+
+[`examples/ember-and-oak/index.html`](examples/ember-and-oak/index.html) was built entirely by the agents on OpenAI: GPT-6.2 Astra for the planner and developers, GPT-6.2 Sol for the rest. The prompt asked for a Portland coffee roaster with an online shop and subscriptions, café hours, a sourcing story and a wholesale form. It took 7 sections, 16 model calls and about 4½ minutes, and the evaluator scored it 92/100 on the first pass. All illustrations are inline SVG/CSS made by the developer agents.
+
 ## Exporting
 
 **Download** saves a single self-contained `index.html` with inline CSS and JS. **Copy HTML** copies the same file to the clipboard. **Open ↗** opens it in a new tab.

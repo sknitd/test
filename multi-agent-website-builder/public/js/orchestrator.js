@@ -135,6 +135,7 @@ export class Orchestrator {
     this.running = true;
     this.abortFlag = false;
     this.site = emptySite(prompt);
+    this.jsStale = false;
     const site = this.site;
     this.code.setSite(site);
     this.canvas.removeCursors();
@@ -280,7 +281,10 @@ export class Orchestrator {
         this.canvas.hide(agent);
       }),
     );
-    if (stage === "review") await this.canvas.renderFull(site);
+    if (stage === "review") {
+      await this.refreshInteractions();
+      await this.canvas.renderFull(site);
+    }
   }
 
   // ---- 2. architecture + visual design + copy, in parallel
@@ -449,6 +453,7 @@ export class Orchestrator {
         await this.typeSection(a, section, res.data.html, res.data.css);
         section.html = res.data.html;
         section.css = res.data.css;
+        section.notes = res.data.thoughts;
         section.status = "built";
         this.ui.renderPlan(site);
         this.ui.log({ agent: a, type: "create", title: `Shipped ${section.title}`, text: `${res.data.html.length.toLocaleString()} chars HTML · ${res.data.css.length.toLocaleString()} chars CSS` });
@@ -471,7 +476,7 @@ export class Orchestrator {
     const hooks = ["data-nav-toggle", "data-nav-menu", "data-demo-form", "class=\"reveal", "data-year", "<details"].filter((h) => html.includes(h));
     const res = await this.step(agent, {
       contract: "interaction",
-      user: `Hooks present in the markup: ${hooks.join(", ") || "none"}\nSection ids: ${site.sections.map((s) => s.id).join(", ")}\n\nPage markup:\n${html}`,
+      user: `Hooks present in the markup: ${hooks.join(", ") || "none"}\nSection ids: ${site.sections.map((s) => s.id).join(", ")}\n\nDevelopers' notes (honour any hooks or classes they say script.js must add):\n${site.sections.filter((s) => s.notes).map((s) => `- #${s.id}: ${s.notes}`).join("\n") || "none"}\n\nPage markup:\n${html}\n\nSection CSS (look for state classes the script must toggle):\n${site.sections.map((s) => s.css).join("\n")}`,
       parse: "js",
       fallback: () => demo.demoInteraction(),
     });
@@ -490,10 +495,18 @@ export class Orchestrator {
     }
     this.code.jsTyping = null;
     site.js = js;
+    this.jsStale = false;
     this.code.touch();
     await this.canvas.renderFull(site);
     this.ui.agentState(a, "done");
     this.canvas.hide(a);
+  }
+
+  /** Markup changed after script.js was written: let the interaction engineer update it. */
+  async refreshInteractions() {
+    if (!this.jsStale || !this.firstOf("interaction")) return;
+    this.ui.log({ agent: this.firstOf("interaction"), type: "info", title: "Sections changed after script.js was written — updating it" });
+    await this.interactionStage();
   }
 
   // ---- 5. QA review
@@ -530,6 +543,7 @@ export class Orchestrator {
     this.canvas.hide(agent);
     if (fixes.length) {
       await this.fixPass(fixes);
+      await this.refreshInteractions();
       await this.canvas.renderFull(site);
     }
     this.canvas.clearMarks("box");
@@ -574,7 +588,9 @@ export class Orchestrator {
         await this.typeSection(a, section, res.data.html, res.data.css);
         section.html = res.data.html;
         section.css = res.data.css;
+        section.notes = res.data.thoughts;
         section.revisions = (section.revisions || 0) + 1;
+        if (site.js) this.jsStale = true;
         this.canvas.unmark(id);
         this.ui.renderPlan(site);
       }
@@ -628,6 +644,7 @@ export class Orchestrator {
       }
       this.ui.log({ agent: judge, type: "info", title: `Requesting ${ev.improvements.length} improvement(s) before re-scoring` });
       await this.fixPass(ev.improvements.map((i) => ({ ...i, from: judge })));
+      await this.refreshInteractions();
       await this.canvas.renderFull(site);
     }
     this.canvas.hide(judge);
@@ -719,6 +736,8 @@ export class Orchestrator {
       }
       const changes = (Array.isArray(d.changes) ? d.changes : []).filter((c) => c && c.sectionId && !added.some((a) => a.id === c.sectionId));
       if (changes.length) await this.fixPass(changes.map((c) => ({ sectionId: c.sectionId, instruction: c.instruction || request, from: planner })));
+      if (added.length) this.jsStale = true;
+      await this.refreshInteractions();
       await this.canvas.renderFull(site);
       await this.evalLoop();
       this.finish(t0);

@@ -1,0 +1,1236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ember &amp; Oak — Single origins, roasted weekly in Portland.</title>
+<meta name="description" content="Single origins, roasted weekly in Portland.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --color-primary:#853E2C;--color-secondary:#343E2C;--color-accent:#A34B25;
+  --color-bg:#F7F1E7;--color-surface:#FFFDF8;--color-text:#28221D;--color-muted:#665B50;
+  --color-on-primary:#FFFDF8;--color-primary-text:#853E2C;
+  --font-heading:"Fraunces",system-ui,sans-serif;--font-body:"DM Sans",system-ui,sans-serif;
+  --radius:10px;--shadow:0 8px 24px rgba(40, 34, 29, 0.08);--container:1160px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:1.0625rem;line-height:1.65;overflow-x:hidden}
+h1,h2,h3,h4{font-family:var(--font-heading);line-height:1.15;margin:0 0 .6em;letter-spacing:-.01em}
+h1{font-size:clamp(2.2rem,5.5vw,4rem)}h2{font-size:clamp(1.7rem,3.6vw,2.6rem)}h3{font-size:1.25rem}
+p{margin:0 0 1em}a{color:var(--color-primary-text)}img,svg{max-width:100%;display:block}
+:focus-visible{outline:3px solid var(--color-accent);outline-offset:3px}
+.container{width:min(100% - 2.5rem,var(--container));margin-inline:auto}
+.section-pad{padding-block:clamp(3.5rem,8vw,6.5rem)}
+.eyebrow{display:inline-block;font-size:.8rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--color-primary-text);margin-bottom:.8rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.85rem 1.5rem;border-radius:999px;font-weight:600;font-family:var(--font-body);font-size:1rem;text-decoration:none;border:2px solid transparent;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background:var(--color-primary);color:var(--color-on-primary);box-shadow:0 8px 20px color-mix(in srgb,var(--color-primary) 35%,transparent)}
+.btn-outline{background:transparent;color:inherit;border-color:currentColor}
+.card{background:var(--color-surface);border-radius:var(--radius);padding:1.6rem;box-shadow:var(--shadow)}
+.grid-auto{display:grid;gap:1.5rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+.js-reveal .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+.js-reveal .reveal.is-visible{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.js-reveal .reveal{opacity:1;transform:none;transition:none}}
+
+/* Ember & Oak */
+#nav{position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--color-bg);
+  box-shadow: inset 0 -1px color-mix(in srgb, var(--color-muted) 25%, transparent);
+  color: var(--color-text);
+  font-family: var(--font-body);}
+#nav .nav-row{box-sizing: border-box;
+  width: min(calc(100% - clamp(2rem, 7vw, 7rem)), var(--container, 80rem));
+  padding-inline: 0;
+  margin-inline: auto;
+  min-height: var(--header-offset, 80px);
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 3.5vw, 3.5rem);}
+#nav .nav-brand{margin: 0 auto 0 0;
+  font: 600 clamp(1.6rem, 2.4vw, 2.1rem)/1.1 var(--font-heading);
+  letter-spacing: -.055em;}
+#nav .nav-brand a{display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  color: var(--color-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+  min-height: 44px;}
+#nav .nav-brand i{font-weight: 400;}
+#nav .nav-seal{color: var(--color-primary);}
+#nav [data-nav-menu]{display: flex;
+  gap: clamp(1rem, 2.6vw, 2.6rem);
+  align-items: center;}
+#nav [data-nav-menu] a{display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: inherit;
+  text-decoration: none;
+  font-size: .95rem;
+  font-weight: 550;}
+#nav [data-nav-menu] a:hover{color: var(--color-primary-text);
+  text-decoration: underline;
+  text-underline-offset: .35em;}
+#nav button{cursor: pointer;
+  color: inherit;
+  font: 600 .9rem/1 var(--font-body);}
+#nav .nav-cart{display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  padding: 0 1.1rem;
+  min-height: 44px;
+  border-radius: var(--radius);
+  white-space: nowrap;}
+#nav .nav-cart:hover{background: var(--color-secondary);
+  border-color: var(--color-secondary);}
+#nav .nav-toggle{display: none;}
+#nav .nav-skip{position: absolute;
+  left: 1rem;
+  top: .5rem;
+  transform: translateY(-160%);
+  padding: .75rem 1rem;
+  background: var(--color-surface);
+  color: var(--color-primary-text);
+  border-radius: var(--radius);
+  z-index: 1;}
+#nav .nav-skip:focus{transform: none;}
+#nav :focus-visible{outline: 3px solid var(--color-accent); outline-offset: 3px;}
+@media (max-width: 760px){
+#nav{position: relative;}
+#nav.nav-enhanced{position: sticky;}
+#nav .nav-row{flex-wrap: wrap;
+    gap: 0 .35rem;
+    padding-block: .5rem .25rem;
+    min-height: var(--header-offset, 66px);}
+#nav .nav-brand{font-size: clamp(1.2rem, 6vw, 1.65rem);}
+#nav .nav-brand a{gap: .4rem;}
+#nav .nav-seal{width: 29px; height: 34px;}
+#nav .nav-cart{padding-inline: .65rem; gap: .35rem;}
+#nav [data-nav-menu]{order: 1;
+    flex: 1 0 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0 .75rem;}
+#nav.nav-enhanced .nav-row{flex-wrap: nowrap; padding-block: 0;}
+#nav.nav-enhanced .nav-toggle{display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;}
+#nav .nav-toggle .nav-cross, #nav .nav-toggle[aria-expanded="true"] .nav-bars{display: none;}
+#nav .nav-toggle[aria-expanded="true"] .nav-cross{display: block;}
+#nav.nav-enhanced [data-nav-menu]{display: none;
+    position: absolute;
+    inset: 100% 0 auto;
+    max-height: calc(100dvh - var(--header-offset, 66px));
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: var(--color-surface);
+    box-shadow: var(--shadow);
+    padding: .5rem 5% 1rem;
+    border-top: 1px solid color-mix(in srgb, var(--color-muted) 18%, transparent);
+    gap: 0;
+    justify-content: stretch;
+    align-items: stretch;}
+#nav.nav-enhanced .nav-toggle[aria-expanded="true"] + [data-nav-menu]{display: grid;}
+#nav.nav-enhanced [data-nav-menu] a{min-height: 48px;}
+}
+
+/* Single origins, roasted weekly in Portland. */
+#weekly-roast{display:grid;grid-template-columns:1fr 1fr;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body),sans-serif}
+#weekly-roast .roast-intro{align-self:center;padding:clamp(3rem,5.5vw,6rem) clamp(2rem,4vw,5rem) clamp(3rem,5.5vw,6rem) max(6vw,calc((100vw - 80rem)/2));box-sizing:border-box}
+#weekly-roast .roast-kicker{display:flex;align-items:center;gap:.8rem;margin:0 0 1.6rem;color:var(--color-primary-text);font-size:.71rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+#weekly-roast .roast-kicker::before{content:"";width:2rem;height:1px;background:currentColor}
+#weekly-roast h1{margin:0;font:500 clamp(3.2rem,5.15vw,5.65rem)/1.01 var(--font-heading),Georgia,serif;letter-spacing:-.052em}
+#weekly-roast .roast-origin{margin:1.65rem 0 .7rem;font:500 clamp(1.08rem,1.45vw,1.45rem)/1.4 var(--font-heading),Georgia,serif;color:var(--color-primary-text)}
+#weekly-roast .roast-origin span{margin:0 .12em}
+#weekly-roast .roast-description{max-width:46ch;margin:0;color:var(--color-muted);font-size:1rem;line-height:1.65}
+#weekly-roast .roast-actions{display:flex;align-items:center;flex-wrap:wrap;gap:1.65rem;margin-top:1.85rem}
+#weekly-roast .roast-shop{display:inline-flex;align-items:center;gap:1.1rem;padding:.88rem 1.35rem;background:var(--color-primary);color:var(--color-on-primary);border-radius:var(--radius);text-decoration:none;font-size:.93rem;font-weight:600}
+#weekly-roast .roast-shop:hover{background:var(--color-secondary)}
+#weekly-roast .roast-visit{padding:.7rem 0;color:var(--color-text);font-size:.93rem;font-weight:600;text-decoration:underline;text-underline-offset:.35em}
+#weekly-roast a:focus-visible{outline:3px solid var(--color-primary-text);outline-offset:5px}
+#weekly-roast .roast-art{position:relative;overflow:hidden;background:#bfc1a8}
+#weekly-roast .roast-art svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+@media(min-aspect-ratio:2/1) and (min-width:1500px){
+#weekly-roast .roast-art{min-height:38vw}
+}
+@media(max-width:760px){
+#weekly-roast{grid-template-columns:1fr}
+#weekly-roast .roast-intro{padding:3rem max(1.5rem,6vw)}
+#weekly-roast h1{font-size:clamp(3.25rem,9vw,4.65rem)}
+#weekly-roast .roast-art{aspect-ratio:1.32}
+#weekly-roast .roast-actions{gap:1.35rem}
+#weekly-roast .roast-kicker{margin-bottom:1.25rem}
+}
+
+/* On the roast table */
+#shop-coffee{background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);scroll-margin-top:5rem;padding-block:clamp(3.5rem,7vw,7rem)}
+#shop-coffee *{box-sizing:border-box}
+#shop-coffee .roast-art-library{position:absolute;width:0;height:0;overflow:hidden}
+#shop-coffee .roast-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:1.25rem;margin-bottom:2rem}
+#shop-coffee .roast-kicker{display:flex;align-items:center;gap:.7rem;margin:0 0 .8rem;color:var(--color-primary-text);letter-spacing:.16em;text-transform:uppercase;font-size:.72rem;font-weight:700}
+#shop-coffee .roast-kicker::before{content:"";width:2rem;border-top:1px solid currentColor}
+#shop-coffee h2, #shop-coffee h3, #shop-coffee h4{font-family:var(--font-heading);font-weight:500;line-height:1.09;margin:0}
+#shop-coffee h2{font-size:clamp(2.5rem,4.7vw,4.6rem);letter-spacing:-.045em}
+#shop-coffee .roast-deck{font-size:1.05rem;color:var(--color-muted);line-height:1.55;margin:.8rem 0 0}
+#shop-coffee button, #shop-coffee select{font-family:inherit;cursor:pointer}
+#shop-coffee .roast-cart-trigger{display:inline-flex;align-items:center;justify-content:center;gap:.6rem;background:transparent;border:1px solid #BAAB9B;border-radius:var(--radius);min-height:44px;padding:.55rem .85rem;font-size:.94rem;font-weight:600;color:var(--color-text);white-space:nowrap}
+#shop-coffee [data-cart-count]{border-radius:50%;min-width:1.5em;padding:.16em;background:var(--color-secondary);color:var(--color-on-primary);font-size:.85em}
+#shop-coffee .roast-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(.85rem,2vw,1.7rem)}
+#shop-coffee .roast-card{background:var(--color-surface);border:1px solid #DAD0C1;border-radius:var(--radius);overflow:hidden;min-width:0;display:flex;flex-direction:column}
+#shop-coffee .roast-studio{position:relative;isolation:isolate;display:grid;place-items:center;aspect-ratio:1.68;overflow:hidden;background:linear-gradient(124deg,#EFE3D1,#DDC8B0);color:#874531}
+#shop-coffee .roast-studio::before{content:"";position:absolute;inset:0;background:linear-gradient(143deg,transparent 45%,#fff6 46%,transparent 56%,#fff3 58%,transparent 65%);opacity:.45}
+#shop-coffee .roast-ethiopia{background:linear-gradient(124deg,#E7E6D6,#CDD1B9);color:#425137}
+#shop-coffee .roast-guatemala{background:linear-gradient(124deg,#F3E2C7,#DEC69E);color:#98612C}
+#shop-coffee .roast-studio>span{position:absolute;top:.9rem;left:1rem;font:italic .85rem var(--font-heading);color:#564B3E}
+#shop-coffee .roast-studio>svg{position:relative;width:100%;height:100%;transform:rotate(-3deg)}
+#shop-coffee .roast-ethiopia>svg{transform:rotate(3deg)}
+#shop-coffee .roast-bag-origin{fill:#FFF7E8;text-anchor:middle;font:700 7px Georgia,serif;letter-spacing:1px}
+#shop-coffee .roast-details{display:flex;flex-direction:column;flex:1;padding:clamp(1.05rem,1.8vw,1.7rem)}
+#shop-coffee .roast-origin{margin:0 0 .6rem;font-size:.78rem;font-weight:600;line-height:1.5;color:var(--color-primary-text)}
+#shop-coffee .roast-origin b{padding:0 .15em}
+#shop-coffee .roast-details h3{font-size:clamp(1.55rem,2.3vw,2.25rem);letter-spacing:-.035em}
+#shop-coffee .roast-notes{font-size:.95rem;line-height:1.55;color:var(--color-muted);margin:.65rem 0 1.2rem}
+#shop-coffee .roast-price{margin:auto 0 1rem;font-weight:700;font-size:1.24rem;padding-bottom:1rem;border-bottom:1px solid #DDD4C7}
+#shop-coffee .roast-price span{font-size:.87rem;color:var(--color-muted);font-weight:400}
+#shop-coffee label{font-size:.82rem;font-weight:600;margin:0 0 .4rem}
+#shop-coffee select{width:100%;min-height:44px;border:1px solid #B5A99A;border-radius:6px;background:var(--color-surface);color:var(--color-text);font-size:.92rem;padding:.65rem .45rem}
+#shop-coffee .roast-add{width:100%;display:flex;justify-content:space-between;align-items:center;min-height:45px;margin-top:.65rem}
+#shop-coffee .roast-add span{font-size:1.3rem;line-height:1}
+#shop-coffee .roast-footnote{font-size:.87rem;line-height:1.6;margin:1.2rem 0 0;color:var(--color-muted)}
+#shop-coffee .roast-announcement:not(:empty){margin-top:.8rem;font-weight:600;color:var(--color-secondary)}
+#shop-coffee dialog{position:fixed;inset:0 0 0 auto;margin:0;width:min(29rem,100%);max-width:100%;height:100%;height:100dvh;max-height:none;border:0;padding:clamp(1.35rem,4vw,2rem);overflow-y:auto;background:var(--color-surface);color:var(--color-text);box-shadow:var(--shadow)}
+#shop-coffee dialog::backdrop{background:rgb(34 29 24 / .48)}
+#shop-coffee .roast-cart-head, #shop-coffee .roast-subtotal{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #DACFC1;padding-bottom:1.2rem;margin-bottom:1.5rem}
+#shop-coffee .roast-cart-head .eyebrow{margin:0 0 .5rem;color:var(--color-primary-text)}
+#shop-coffee dialog h3{font-size:2.3rem}
+#shop-coffee dialog h4{font-size:1.5rem}
+#shop-coffee dialog p{line-height:1.55;color:var(--color-muted)}
+#shop-coffee .roast-quiet{background:none;border:0;color:var(--color-primary-text);font-size:.95rem;text-decoration:underline;text-underline-offset:.2em;min-height:44px}
+#shop-coffee .roast-cart-lines{list-style:none;padding:0}
+#shop-coffee .roast-line{border-block-start:1px solid #DACFC1;padding:1rem 0}
+#shop-coffee .roast-line p{margin:.35rem 0 .8rem}
+#shop-coffee .roast-line-controls{display:flex;align-items:center;gap:.85rem}
+#shop-coffee .roast-line-controls button{width:44px;height:44px;border:1px solid #C7BAA8;background:var(--color-bg);border-radius:6px;color:var(--color-text);font-size:1.1rem}
+#shop-coffee .roast-line-controls strong{margin-left:auto}
+#shop-coffee .roast-subtotal{border-top:1px solid #DACFC1;padding-top:1rem}
+#shop-coffee :focus-visible{outline:3px solid var(--color-accent);outline-offset:3px}
+#shop-coffee [hidden]{display:none!important}
+@media(max-width:800px){
+#shop-coffee .roast-grid{grid-template-columns:minmax(0,1fr);max-width:37rem;margin-inline:auto}
+#shop-coffee .roast-intro{align-items:flex-start;flex-wrap:wrap}
+#shop-coffee .roast-studio{aspect-ratio:1.85}
+#shop-coffee .roast-details{padding:1.25rem}
+#shop-coffee .roast-details h3{font-size:1.9rem}
+#shop-coffee .roast-footnote{max-width:37rem;margin-inline:auto}
+}
+@media(max-width:600px){
+#shop-coffee dialog{width:100%}
+}
+
+/* The people behind the beans */
+#our-growers{background:var(--color-bg); color:var(--color-text); font-family:var(--font-body),sans-serif;}
+#our-growers .growers-layout{display:grid; grid-template-columns:minmax(0,1.16fr) minmax(0,.84fr); align-items:center; gap:clamp(2.5rem,6vw,6rem);}
+#our-growers .growers-copy{grid-column:2; grid-row:1; max-width:31rem;}
+#our-growers .growers-kicker{display:flex; align-items:center; gap:.8rem; color:var(--color-primary-text); margin:0 0 1.1rem;}
+#our-growers .growers-kicker::before{content:""; width:2rem; height:1px; background:currentColor;}
+#our-growers h2{font-family:var(--font-heading),Georgia,serif; font-size:clamp(2.6rem,4.3vw,4.5rem); font-weight:500; line-height:1.04; letter-spacing:-.045em; margin:0 0 1.35rem; text-wrap:balance;}
+#our-growers .growers-copy p:not(.eyebrow){font-size:1rem; line-height:1.7; color:var(--color-muted); margin:0 0 .95rem;}
+#our-growers .growers-copy p.growers-intro{font-family:var(--font-heading),Georgia,serif; color:var(--color-text); font-size:clamp(1.23rem,1.55vw,1.55rem); line-height:1.42;}
+#our-growers .growers-link{display:inline-flex; align-items:center; min-height:44px; gap:1.1rem; color:var(--color-primary-text); text-decoration:none; border-bottom:1px solid currentColor; font-weight:700;}
+#our-growers .growers-link:hover{color:var(--color-secondary);}
+#our-growers .growers-link:focus-visible{outline:2px solid currentColor; outline-offset:4px;}
+#our-growers .growers-plate{grid-column:1; grid-row:1; margin:0; overflow:hidden; border-radius:var(--radius); background:var(--color-secondary); color:var(--color-on-primary);}
+#our-growers .growers-plate svg{display:block; width:100%; height:auto;}
+#our-growers figcaption{display:flex; align-items:baseline; flex-wrap:wrap; justify-content:space-between; gap:.4rem 1rem; padding:1.1rem clamp(1.2rem,2vw,2rem);}
+#our-growers figcaption span{font:500 1.15rem/1.4 var(--font-heading),Georgia,serif;}
+#our-growers figcaption small{text-transform:uppercase; font-size:.68rem; letter-spacing:.16em;}
+@media(max-width:780px){
+#our-growers .growers-layout{grid-template-columns:minmax(0,1fr); gap:2rem;}
+#our-growers .growers-copy, #our-growers .growers-plate{grid-row:auto; grid-column:1;}
+#our-growers .growers-copy{max-width:40rem;}
+#our-growers .growers-plate svg{aspect-ratio:1.45;}
+}
+
+/* Pull up a stool */
+#visit-cafe{background: var(--color-secondary);
+  color: var(--color-on-primary);
+  font-family: var(--font-body);}
+#visit-cafe .visit-layout{display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;}
+#visit-cafe .visit-panel{padding: clamp(3rem, 6vw, 6rem) clamp(2rem, 6vw, 6rem) clamp(3rem, 6vw, 6rem) 0;}
+#visit-cafe .visit-kicker{display: flex;
+  align-items: center;
+  gap: .8rem;
+  margin: 0 0 1.25rem;
+  color: #e4d3af;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-size: .75rem;
+  font-weight: 700;}
+#visit-cafe .visit-kicker::before{content: "";
+  width: 2rem;
+  height: 1px;
+  background: currentColor;}
+#visit-cafe h2{font: 500 clamp(2.8rem, 4.8vw, 5rem)/1.03 var(--font-heading);
+  letter-spacing: -.045em;
+  color: inherit;
+  margin: 0 0 1.4rem;}
+#visit-cafe .visit-invite{font: 400 clamp(1.2rem, 1.7vw, 1.55rem)/1.35 var(--font-heading);
+  margin: 0 0 .65rem;}
+#visit-cafe .visit-copy{color: #e1dfd2;
+  line-height: 1.65;
+  max-width: 47ch;
+  margin: 0;}
+#visit-cafe .visit-details{margin-top: 1.6rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid #727967;}
+#visit-cafe h3{font: 600 .78rem/1.4 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: #e4d3af;
+  margin: 0 0 .4rem;}
+#visit-cafe address{font-style: normal; line-height: 1.5;}
+#visit-cafe dl{margin: 1rem 0;}
+#visit-cafe dl div{display: flex; justify-content: space-between; gap: 1rem; padding: .45rem 0; border-bottom: 1px solid #666f5d;}
+#visit-cafe dd{margin: 0; font-variant-numeric: tabular-nums;}
+#visit-cafe .visit-map{display: inline-flex;
+  align-items: center;
+  gap: .65rem;
+  min-height: 44px;
+  color: inherit;
+  font-weight: 600;
+  text-underline-offset: .3em;}
+#visit-cafe .visit-map:hover{color: #f0d3a9;}
+#visit-cafe .visit-map:focus-visible{outline: 2px solid currentColor; outline-offset: 4px;}
+#visit-cafe .visit-window{position: relative; overflow: hidden; background: #d7c3a5;}
+#visit-cafe .visit-window svg{display: block; position: absolute; width: 100%; height: 100%; inset: 0;}
+@media (max-width: 760px){
+#visit-cafe .visit-layout{grid-template-columns: 1fr;}
+#visit-cafe .visit-panel{padding: 3rem 0 2rem;}
+#visit-cafe .visit-window{aspect-ratio: 1.45; margin-bottom: 2rem;}
+}
+
+/* Coffee for your restaurant */
+#wholesale{background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body), sans-serif;}
+#wholesale .ws-layout{display: grid;
+  grid-template-columns: minmax(0,.88fr) minmax(0,1.12fr);
+  align-items: start;
+  gap: clamp(2rem,6vw,6rem);}
+#wholesale .ws-intro{border-top: 1px solid var(--color-muted);
+  padding-top: 1.35rem;}
+#wholesale .ws-kicker{margin: 0 0 1.5rem;
+  color: var(--color-primary-text);
+  font-size: .76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .14em;}
+#wholesale h2{max-width: 13ch;
+  margin: 0 0 1.5rem;
+  font: 500 clamp(2.65rem,4.6vw,4.65rem)/1.03 var(--font-heading), serif;
+  letter-spacing: -.045em;
+  text-wrap: balance;}
+#wholesale .ws-lead{max-width: 32ch;
+  margin: 0 0 1rem;
+  font: 450 clamp(1.35rem,2vw,1.7rem)/1.33 var(--font-heading), serif;}
+#wholesale .ws-story{max-width: 45ch;
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.7;}
+#wholesale .ws-signoff{display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  color: var(--color-primary-text);}
+#wholesale .ws-signoff::after{content: "";
+  height: 1px;
+  width: 4rem;
+  background: currentColor;
+  opacity: .4;}
+#wholesale .ws-form{display: grid;
+  gap: 1.15rem;
+  min-width: 0;
+  margin: 0;
+  padding: clamp(1.25rem,3vw,2.5rem);
+  background: var(--color-surface);
+  border: 1px solid #dbd1c4;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  container-type: inline-size;}
+#wholesale .ws-pair{display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.15rem;}
+@container (min-width: 26rem){
+#wholesale .ws-pair{grid-template-columns: repeat(2,minmax(0,1fr));}
+}
+#wholesale .ws-field{display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: .48rem;}
+#wholesale label{font-weight: 650;
+  font-size: .92rem;}
+#wholesale label span{color: var(--color-muted);
+  font-weight: 400;}
+#wholesale :is(input, #wholesale select, #wholesale textarea){box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: .7rem .8rem;
+  border: 1px solid var(--color-muted);
+  border-radius: 5px;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  font: inherit;
+  font-size: 1rem;}
+#wholesale textarea{resize: vertical;
+  line-height: 1.5;}
+#wholesale textarea::placeholder{color: var(--color-muted); opacity: 1;}
+#wholesale :is(input, #wholesale select, #wholesale textarea, #wholesale button, #wholesale a):focus-visible{outline: 3px solid var(--color-secondary);
+  outline-offset: 3px;}
+#wholesale .ws-error{display: none;
+  color: var(--color-primary-text);
+  line-height: 1.45;}
+#wholesale [aria-invalid="true"]{border-color: var(--color-primary);}
+#wholesale [aria-invalid="true"] + .ws-error{display: block;}
+#wholesale .ws-actions{border-top: 1px solid #dbd1c4; padding-top: 1.2rem;}
+#wholesale .ws-actions button{display: inline-flex;
+  gap: 1.1rem;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: .75rem 1.2rem;
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;}
+#wholesale .ws-actions button:hover{background: var(--color-secondary);}
+#wholesale #ws-demo{margin: .7rem 0 0;
+  color: var(--color-muted);
+  font-size: .85rem;
+  line-height: 1.5;}
+#wholesale [role="status"]{margin-top: -1.15rem;}
+#wholesale .ws-confirmation{margin-top: 1rem;
+  padding: 1rem;
+  border-left: 3px solid var(--color-secondary);
+  background: var(--color-bg);
+  line-height: 1.5;
+  overflow-wrap: anywhere;}
+#wholesale .ws-confirmation p{margin: .3rem 0 0;}
+#wholesale .ws-confirmation a{color: var(--color-primary-text);}
+@media (max-width: 760px){
+#wholesale .ws-layout{grid-template-columns: minmax(0,1fr); gap: 1.75rem;}
+#wholesale .ws-signoff{display: none;}
+}
+@media (max-width: 480px){
+#wholesale .ws-actions button{width: 100%;}
+}
+
+/* Ember & Oak Coffee Roasters */
+#footer{background-color: var(--color-secondary);
+  color: var(--color-on-primary);
+  font-family: var(--font-body), sans-serif;}
+#footer .footer-inner{display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 2rem 3rem;
+  padding-block: clamp(2.25rem, 4vw, 3.75rem);}
+#footer h2{margin: 0;
+  color: inherit;
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.1;}
+#footer h2 span{display: block;
+  margin-top: 0.55rem;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  line-height: 1.4;
+  text-transform: uppercase;}
+#footer address{margin-top: 1.3rem;
+  font-style: normal;
+  font-size: 0.95rem;
+  line-height: 1.5;}
+#footer address p{margin: 0;}
+#footer a{display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: inherit;
+  text-underline-offset: 0.25em;
+  text-decoration-thickness: 1px;}
+#footer .footer-links{display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem clamp(1.25rem, 3vw, 2.5rem);}
+#footer .footer-links a{font-weight: 600;
+  text-decoration: none;}
+#footer .footer-links a:hover{text-decoration: underline;}
+#footer a:focus-visible{outline: 2px solid currentColor;
+  outline-offset: 4px;}
+@media (max-width: 640px){
+#footer .footer-inner{flex-direction: column;
+    gap: 1.2rem;}
+#footer .footer-links{width: 100%;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 253, 248, 0.28);}
+}
+
+</style>
+</head>
+<body>
+<header id="nav" class="site-nav">
+  <a class="nav-skip" href="#weekly-roast">Skip to content</a>
+  <div class="container nav-row">
+    <h2 class="nav-brand">
+      <a href="#weekly-roast">
+        <svg class="nav-seal" width="38" height="42" viewBox="0 0 38 42" fill="none" aria-hidden="true">
+          <rect x="1" y="1" width="36" height="40" rx="18" fill="currentColor"/>
+          <g stroke="var(--color-on-primary)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 32c4-6 7-14 8-22"/>
+            <path d="M19 22c-6 0-9-5-9-10 6 1 10 5 9 10Zm-3 6c5 1 10-3 12-9-6 0-11 4-12 9Zm5-12c-2-4-1-8 3-11 2 4 1 8-3 11Z"/>
+          </g>
+        </svg>
+        <span>Ember <i>&amp;</i> Oak</span>
+      </a>
+    </h2>
+    <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Open menu" aria-controls="roastery-menu">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path class="nav-bars" d="M2 6h16M2 14h16"/>
+        <path class="nav-cross" d="m4 4 12 12M16 4 4 16"/>
+      </svg>
+    </button>
+    <nav id="roastery-menu" data-nav-menu aria-label="Main">
+      <a href="#shop-coffee">Shop</a>
+      <a href="#our-growers">Our Growers</a>
+      <a href="#visit-cafe">Café</a>
+      <a href="#wholesale">Wholesale</a>
+    </nav>
+    <button class="nav-cart" type="button" data-cart-open aria-haspopup="dialog" title="Open your cart. The number shows how many bags are in it.">
+      <svg width="17" height="19" viewBox="0 0 20 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 7h14l1 13H2L3 7Z"/>
+        <path d="M7 9V5a3 3 0 0 1 6 0v4"/>
+      </svg>
+      <span>Cart (<span data-cart-count>0</span>)</span>
+    </button>
+  </div>
+</header>
+
+<section id="weekly-roast" aria-labelledby="weekly-roast-title">
+  <div class="roast-intro">
+    <p class="roast-kicker">This week’s featured roast</p>
+    <h1 id="weekly-roast-title">Single origins,<br>roasted weekly<br>in Portland.</h1>
+    <p class="roast-origin">Finca El Roble <span>·</span> Huila, Colombia</p>
+    <p class="roast-description">Roasted in small batches in Southeast Portland. This week’s featured coffee from Finca El Roble tastes like red apple and panela, with a cocoa finish.</p>
+    <div class="roast-actions">
+      <a class="btn btn-primary roast-shop" href="#shop-coffee">Shop the beans <span aria-hidden="true">→</span></a>
+      <a class="roast-visit" href="#visit-cafe">Visit the café</a>
+    </div>
+  </div>
+  <div class="roast-art">
+    <svg viewBox="0 0 660 640" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="wr-art-title">
+      <title id="wr-art-title">An ivory Ember &amp; Oak bag with a rust-red Finca El Roble label, standing in sunlight on a sage counter.</title>
+      <defs>
+        <linearGradient id="wr-wall" x2=".85" y2="1" gradientUnits="objectBoundingBox">
+          <stop stop-color="#dcdac2"/><stop offset=".56" stop-color="#bfc1a8"/><stop offset="1" stop-color="#969b80"/>
+        </linearGradient>
+        <linearGradient id="wr-paper">
+          <stop stop-color="#ad9774"/><stop offset=".06" stop-color="#ebe0c7"/><stop offset=".27" stop-color="#fbefd6"/><stop offset=".72" stop-color="#ede0c3"/><stop offset=".94" stop-color="#d6c5a6"/><stop offset="1" stop-color="#b6a181"/>
+        </linearGradient>
+        <linearGradient id="wr-side">
+          <stop stop-color="#bcaa88"/><stop offset=".47" stop-color="#9f8a6c"/><stop offset=".59" stop-color="#c2b08e"/><stop offset="1" stop-color="#89795f"/>
+        </linearGradient>
+        <filter id="wr-soft" x="-40%" y="-80%" width="180%" height="260%"><feGaussianBlur stdDeviation="10"/></filter>
+        <filter id="wr-grain"><feTurbulence type="fractalNoise" baseFrequency=".72" numOctaves="3" stitchTiles="stitch"/></filter>
+      </defs>
+      <rect width="660" height="640" fill="url(#wr-wall)"/>
+      <g fill="#fff7d8" opacity=".32" filter="url(#wr-soft)">
+        <path d="M-140 340 208 -60H328L-30 375zM-45 448 393 -60h47L12 461z"/>
+      </g>
+      <path d="M0 487 660 450v190H0z" fill="#adaf93"/>
+      <path d="m169 558 250-68 263 38-13 36-360 22z" fill="#53563f" opacity=".53" filter="url(#wr-soft)"/>
+      <g transform="rotate(5 326 320)">
+        <path d="m185 91 263-5 10 16-3 35 19 361-9 43-43 19-246-2-7-23 14-397z" fill="url(#wr-paper)" stroke="#9e9279" stroke-width="1.3"/>
+        <path d="m448 88 10 14-3 35 19 361-9 43-43 19 14-52 4-361z" fill="url(#wr-side)"/>
+        <path d="m445 143 5 351 15 47-28-31z" fill="#796749" opacity=".27"/>
+        <path d="m185 91 263-5-4 30-262 8z" fill="#dbcdb1"/>
+        <g fill="none" stroke="#ae9d7f" opacity=".76">
+          <path d="m185 97 261-6m-262 13 261-6m-262 14 261-7m-262 25 261-9"/>
+          <path d="m184 134 32 28-32-14m257-19-21 30 19-14m-266 385 30-31-26 48m245 1-17-37 27 19"/>
+        </g>
+        <path d="m177 550 37-10 170 3 39 12-129 3z" fill="#b7a487" opacity=".45"/>
+        <g fill="#393c2d" text-anchor="middle">
+          <text x="310" y="201" font-family="Georgia,serif" font-size="37" letter-spacing="-2">Ember &amp; Oak</text>
+          <text x="310" y="223" font-family="Arial,sans-serif" font-size="9" font-weight="bold" letter-spacing="3.1">COFFEE ROASTERS</text>
+        </g>
+        <path d="m192 258 235-6-3 226-239 5z" fill="#995034"/>
+        <g transform="rotate(-1.4 306 367)" fill="#fff1d6">
+          <text x="207" y="285" font-family="Arial,sans-serif" font-size="9" letter-spacing="2.6">SINGLE ORIGIN</text>
+          <g fill="none" stroke="#e8caa1" stroke-width="1.25">
+            <path d="m206 347 32-18 19 5 35-30 14 11 19-7 49 26 30-9m-198 29 43-15 14 2 31-28 13 11 22-8 44 24 31-8m-198 28 47-14 14 3 29-27 13 10 21-8 45 24 29-9"/>
+            <circle cx="348" cy="298" r="9"/>
+          </g>
+          <text x="205" y="398" font-family="Georgia,serif" font-size="31" letter-spacing="-1.4">Finca El Roble</text>
+          <text x="207" y="419" font-family="Arial,sans-serif" font-size="10" letter-spacing="2">HUILA, COLOMBIA</text>
+          <path d="M206 436h196" stroke="#e8caa1"/>
+          <text x="207" y="458" font-family="Arial,sans-serif" font-size="10">Red apple  ·  Panela  ·  Cocoa</text>
+        </g>
+        <text x="304" y="518" text-anchor="middle" font-family="Arial,sans-serif" font-size="8.5" letter-spacing="1.6" fill="#5d5846">WHOLE BEAN  /  12 OZ (340 G)</text>
+      </g>
+      <rect width="660" height="640" filter="url(#wr-grain)" opacity=".085" style="mix-blend-mode:multiply"/>
+    </svg>
+  </div>
+</section>
+
+<section id="shop-coffee" class="section-pad" aria-labelledby="roast-table-title">
+  <svg class="roast-art-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="roast-paper" x1="0" x2="1" y1="0" y2=".15">
+        <stop stop-color="#AF8760"/><stop offset=".08" stop-color="#D2B38B"/><stop offset=".31" stop-color="#E3C8A2"/><stop offset=".76" stop-color="#D8B991"/><stop offset="1" stop-color="#BA9670"/>
+      </linearGradient>
+      <symbol id="roast-bag" viewBox="0 0 320 208">
+        <ellipse cx="164" cy="187" rx="62" ry="5" fill="#34291C" opacity=".12"/>
+        <path d="M109 25 202 21 212 29 214 47 211 58 221 176 213 185 112 189 102 181 107 59 104 47Z" fill="url(#roast-paper)" stroke="#977754" stroke-width=".8"/>
+        <path d="m202 22 10 7 2 18-3 11 10 118-8 9-10-125 4-13Z" fill="#97724F" opacity=".7"/>
+        <path d="m109 28 94-4m-95 7 95-4m-96 8 97-4m-99 16 103-4" stroke="#A58662" fill="none" opacity=".65"/>
+        <path d="m107 59 12-9-7 30m-9 99 13-12-4 18m101-2-12-8-87 8" fill="none" stroke="#AE8D68" opacity=".65"/>
+        <g transform="rotate(-2 160 110)">
+          <rect x="115" y="64" width="83" height="100" fill="#FCF6E8"/>
+          <path d="M115 122h83v42h-83Z" fill="currentColor"/>
+          <text x="156.5" y="78" text-anchor="middle" font-family="Arial,sans-serif" font-size="4.7" letter-spacing="1.4" fill="#4B4033">COFFEE ROASTERS</text>
+          <text x="156.5" y="94" text-anchor="middle" font-family="Georgia,serif" font-size="12" font-weight="bold" fill="#392E23">Ember &amp; Oak</text>
+          <g fill="none" stroke="#695843" stroke-width=".8">
+            <path d="m120 116 16-9 8 4 16-14 13 12 7-4 13 10m-69 2 15-7 7 4 13-12 14 11 7-5 10 8m-41 0 11-10 10 9"/>
+            <path d="m133 118 6-4 7 3m7 0 7-6 7 6"/>
+          </g>
+          <path d="M126 146h61" stroke="#FFF7E8" opacity=".55" stroke-width=".6"/>
+          <text x="156.5" y="156" text-anchor="middle" fill="#FFF7E8" font-family="Arial,sans-serif" font-size="4.7" letter-spacing=".8">WHOLE BEAN · 12 OZ</text>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+  <div class="container">
+    <header class="roast-intro reveal">
+      <div>
+        <p class="eyebrow roast-kicker">The weekly roast</p>
+        <h2 id="roast-table-title">On the roast table</h2>
+        <p class="roast-deck">Three single origins. Find the one you’d like to wake up to.</p>
+      </div>
+      <button class="roast-cart-trigger" type="button" data-cart-open aria-haspopup="dialog" aria-controls="roast-cart">
+        <svg width="18" height="20" viewBox="0 0 20 22" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 7h14l1 13H2L3 7Z"/><path d="M6.5 8V5a3.5 3.5 0 0 1 7 0v3"/></svg>
+        Your cart <span data-cart-count>0</span>
+      </button>
+    </header>
+    <div class="roast-grid">
+      <article class="roast-card reveal" data-product-id="finca-el-roble" data-price="22" data-product-name="Finca El Roble" aria-labelledby="roast-roble">
+        <div class="roast-studio roast-colombia">
+          <span aria-hidden="true">Nº 01</span>
+          <svg viewBox="0 0 320 208" role="img" aria-label="Kraft bag of Finca El Roble with a chestnut Colombia label"><use href="#roast-bag" width="320" height="208"/><text class="roast-bag-origin" x="156.5" y="139" transform="rotate(-2 160 110)">COLOMBIA</text></svg>
+        </div>
+        <div class="roast-details">
+          <p class="roast-origin">Huila, Colombia <b>·</b> Washed</p>
+          <h3 id="roast-roble">Finca El Roble</h3>
+          <p class="roast-notes">Red apple, panela, and cocoa. Crisp up front, with a soft brown-sugar sweetness.</p>
+          <p class="roast-price">$22 <span>· 12 oz</span></p>
+          <label for="roble-frequency">Delivery frequency</label>
+          <select id="roble-frequency" data-frequency>
+            <option value="once">One-time purchase</option><option value="2-weeks">Every 2 weeks · $22 per delivery</option><option value="4-weeks">Every 4 weeks · $22 per delivery</option>
+          </select>
+          <button type="button" class="btn btn-primary roast-add" data-add-to-cart="finca-el-roble">Add to cart <span aria-hidden="true">+</span></button>
+        </div>
+      </article>
+      <article class="roast-card reveal" data-product-id="banko-gotiti" data-price="24" data-product-name="Banko Gotiti" aria-labelledby="roast-banko">
+        <div class="roast-studio roast-ethiopia">
+          <span aria-hidden="true">Nº 02</span>
+          <svg viewBox="0 0 320 208" role="img" aria-label="Kraft bag of Banko Gotiti with an olive Ethiopia label"><use href="#roast-bag" width="320" height="208"/><text class="roast-bag-origin" x="156.5" y="139" transform="rotate(-2 160 110)">ETHIOPIA</text></svg>
+        </div>
+        <div class="roast-details">
+          <p class="roast-origin">Gedeb, Ethiopia <b>·</b> Natural</p>
+          <h3 id="roast-banko">Banko Gotiti</h3>
+          <p class="roast-notes">Blueberry, violet, and lemon zest. Jammy and fragrant, with a bright finish.</p>
+          <p class="roast-price">$24 <span>· 12 oz</span></p>
+          <label for="banko-frequency">Delivery frequency</label>
+          <select id="banko-frequency" data-frequency>
+            <option value="once">One-time purchase</option><option value="2-weeks">Every 2 weeks · $24 per delivery</option><option value="4-weeks">Every 4 weeks · $24 per delivery</option>
+          </select>
+          <button type="button" class="btn btn-primary roast-add" data-add-to-cart="banko-gotiti">Add to cart <span aria-hidden="true">+</span></button>
+        </div>
+      </article>
+      <article class="roast-card reveal" data-product-id="finca-la-esperanza" data-price="20" data-product-name="Finca La Esperanza" aria-labelledby="roast-esperanza">
+        <div class="roast-studio roast-guatemala">
+          <span aria-hidden="true">Nº 03</span>
+          <svg viewBox="0 0 320 208" role="img" aria-label="Kraft bag of Finca La Esperanza with an ochre Guatemala label"><use href="#roast-bag" width="320" height="208"/><text class="roast-bag-origin" x="156.5" y="139" transform="rotate(-2 160 110)">GUATEMALA</text></svg>
+        </div>
+        <div class="roast-details">
+          <p class="roast-origin">Huehuetenango, Guatemala <b>·</b> Washed</p>
+          <h3 id="roast-esperanza">Finca La Esperanza</h3>
+          <p class="roast-notes">Milk chocolate, toasted almond, and orange peel. Round and mellow, with just a touch of citrus.</p>
+          <p class="roast-price">$20 <span>· 12 oz</span></p>
+          <label for="esperanza-frequency">Delivery frequency</label>
+          <select id="esperanza-frequency" data-frequency>
+            <option value="once">One-time purchase</option><option value="2-weeks">Every 2 weeks · $20 per delivery</option><option value="4-weeks">Every 4 weeks · $20 per delivery</option>
+          </select>
+          <button type="button" class="btn btn-primary roast-add" data-add-to-cart="finca-la-esperanza">Add to cart <span aria-hidden="true">+</span></button>
+        </div>
+      </article>
+    </div>
+    <p class="roast-footnote">All coffees come as whole beans in 12 oz bags. Buy a bag once or choose a fresh delivery every two or four weeks.</p>
+    <div class="roast-announcement" role="status" aria-atomic="true" data-cart-status></div>
+  </div>
+  <dialog id="roast-cart" data-cart-dialog aria-labelledby="roast-cart-title">
+    <header class="roast-cart-head">
+      <div><p class="eyebrow">Ember &amp; Oak</p><h3 id="roast-cart-title">Your cart</h3></div>
+      <button type="button" class="roast-quiet" data-cart-close autofocus>Close</button>
+    </header>
+    <div data-cart-empty>
+      <h4>Your cart is empty</h4>
+      <p>Add a bag from the roast table to get started.</p>
+      <button type="button" class="btn btn-primary" data-cart-close>Keep shopping</button>
+    </div>
+    <div data-cart-filled hidden>
+      <p>Change the quantity or remove a bag before checking out. The subtotal shows the cost of a single delivery, even for recurring selections.</p>
+      <ul class="roast-cart-lines" data-cart-items></ul>
+      <template data-cart-line-template>
+        <li class="roast-line">
+          <h4 data-line-name>Finca El Roble</h4>
+          <p data-line-schedule>One-time purchase</p>
+          <div class="roast-line-controls">
+            <button type="button" aria-label="Decrease quantity" data-cart-decrease>−</button>
+            <span data-line-quantity>1</span>
+            <button type="button" aria-label="Increase quantity" data-cart-increase>+</button>
+            <strong data-line-total>$22</strong>
+          </div>
+          <button type="button" class="roast-quiet" data-cart-remove>Remove bag</button>
+        </li>
+      </template>
+      <p class="roast-subtotal">Subtotal <strong data-cart-subtotal>$0</strong></p>
+      <p>No payment is collected, and no order or subscription is created.</p>
+      <button class="btn btn-primary" type="button" data-demo-checkout>Complete demo checkout</button>
+    </div>
+    <div data-cart-confirmation hidden role="status">
+      <h4 tabindex="-1">Demo checkout complete</h4>
+      <p>Thanks for trying the shop! You haven’t been charged, and no coffee will ship. No deliveries were scheduled.</p>
+      <button class="btn btn-primary" type="button" data-cart-close>Keep shopping</button>
+    </div>
+  </dialog>
+</section>
+
+<section id="our-growers" class="section-pad" aria-labelledby="growers-title">
+  <div class="container growers-layout">
+    <div class="growers-copy reveal">
+      <p class="eyebrow growers-kicker">From farm to roast table</p>
+      <h2 id="growers-title">The people behind the beans</h2>
+      <p class="growers-intro">This week’s roast starts with Lucía Vargas at Finca El Roble in Huila, Colombia.</p>
+      <p>Lucía and her team pick ripe cherries by hand and keep each harvest lot separate through washing and drying. We buy directly from Lucía and taste samples alongside her notes on when each lot was picked and how it dried.</p>
+      <p>Those conversations help us choose what to roast each week. We picked this lot for its crisp red-apple acidity and the panela sweetness that comes through as the cup cools.</p>
+      <a class="growers-link" href="#finca-el-roble">Shop Finca El Roble <span aria-hidden="true">→</span></a>
+    </div>
+    <figure class="growers-plate reveal">
+      <svg viewBox="0 0 540 514" role="img" aria-labelledby="growers-art-title" preserveAspectRatio="xMidYMid slice">
+        <title id="growers-art-title">Field illustration of ripe coffee cherries and veined leaves above rows of hillside coffee in Huila</title>
+        <defs>
+          <linearGradient id="growers-sky" x2=".8" y2="1">
+            <stop stop-color="#e4c6a0"/><stop offset="1" stop-color="#f6e9ce"/>
+          </linearGradient>
+          <radialGradient id="growers-fruit" cx=".32" cy=".26" r=".85">
+            <stop stop-color="#d67a4e"/><stop offset=".46" stop-color="#b04a32"/><stop offset="1" stop-color="#733328"/>
+          </radialGradient>
+          <pattern id="growers-rows" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(33)">
+            <path d="M3 0v16" stroke="#bbbc92" stroke-width="5"/>
+          </pattern>
+          <g id="growers-leaf">
+            <path d="M0 0Q24-39 61-31T115-15Q84 4 58 15T0 0Z" fill="#364e36"/>
+            <path d="M3 0Q54-8 110-15M30-4l13-19M49-7l15-17M67-10l13-11M32-4l17 13M56-8l17 10" fill="none" stroke="#84956b" stroke-width="1.4"/>
+          </g>
+          <g id="growers-cherry">
+            <ellipse rx="14" ry="17" fill="url(#growers-fruit)" stroke="#773827" stroke-width="1.2"/>
+            <path d="M-8-5q1-5 5-6" fill="none" stroke="#e8a081" stroke-width="2" stroke-linecap="round"/>
+            <path d="M-2 12q3 2 6-1" fill="none" stroke="#763628" stroke-width="1.5"/>
+          </g>
+        </defs>
+        <rect width="540" height="514" fill="url(#growers-sky)"/>
+        <circle cx="415" cy="108" r="53" fill="#f7e9c7"/>
+        <path d="M0 230Q77 198 131 213T258 189Q335 144 374 159T465 150L540 124V514H0Z" fill="#b5af8b"/>
+        <path d="M0 280Q98 241 171 253T342 217Q417 178 540 202V514H0Z" fill="#919978"/>
+        <path d="M0 327Q80 255 193 284T404 274Q477 247 540 256V514H0Z" fill="#737f5b"/>
+        <path d="M0 311Q122 279 251 365T540 443V514H0Z" fill="#526348"/>
+        <path d="M0 311Q122 279 251 365T540 443V514H0Z" fill="url(#growers-rows)" opacity=".55"/>
+        <path d="M-23 522Q76 401 151 283T315 78" fill="none" stroke="#463f2d" stroke-width="9" stroke-linecap="round"/>
+        <g fill="none" stroke="#505238" stroke-width="4">
+          <path d="M77 391q44-8 75-43m-32-20q-9-45-36-69m70 20q43 2 82-31m-39-27q-15-47-52-78m90 20q47 1 80-25m-42-20q-4-33-30-56"/>
+        </g>
+        <use href="#growers-leaf" transform="translate(148 351) rotate(8) scale(1.15)"/>
+        <use href="#growers-leaf" transform="translate(86 262) rotate(-141) scale(1.2)"/>
+        <use href="#growers-leaf" transform="translate(231 251) rotate(10) scale(1.22)"/>
+        <use href="#growers-leaf" transform="translate(148 147) rotate(-128) scale(.98)"/>
+        <use href="#growers-leaf" transform="translate(310 140) rotate(-12)"/>
+        <use href="#growers-leaf" transform="translate(246 66) rotate(-127) scale(.83)"/>
+        <use href="#growers-leaf" transform="translate(302 91) rotate(-39) scale(.82)"/>
+        <g fill="none" stroke="#525936" stroke-width="3">
+          <path d="M128 319l11 32m-11-32l-6 41m40-90l20 27m-20-27l-4 38m49-94l19 25m-19-25l-3 34m60-108l14 21"/>
+        </g>
+        <use href="#growers-cherry" transform="translate(140 354) rotate(-15)"/>
+        <use href="#growers-cherry" transform="translate(120 366) rotate(19)"/>
+        <use href="#growers-cherry" transform="translate(182 300) rotate(-18)"/>
+        <use href="#growers-cherry" transform="translate(158 313) rotate(13)"/>
+        <use href="#growers-cherry" transform="translate(227 241) rotate(-20) scale(.9)"/>
+        <use href="#growers-cherry" transform="translate(204 250) scale(.94)"/>
+        <use href="#growers-cherry" transform="translate(280 164) scale(.85)"/>
+      </svg>
+      <figcaption><span>Finca El Roble, Huila</span><small>Colombia</small></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="visit-cafe" aria-labelledby="visit-cafe-title">
+  <div class="container visit-layout">
+    <div class="visit-panel reveal">
+      <p class="eyebrow visit-kicker">The Portland café</p>
+      <h2 id="visit-cafe-title">Pull up a stool</h2>
+      <p class="visit-invite">Try this week’s featured origin as a pour-over.</p>
+      <p class="visit-copy">Stop by the bar for a cup of Finca El Roble. If you’re brewing it at home, ask us where to start with grind size and water.</p>
+      <div class="visit-details">
+        <h3>Find us</h3>
+        <address>1426 SE Alder Street, Portland, OR</address>
+        <dl aria-label="Café opening hours">
+          <div><dt>Monday–Friday</dt><dd>7 am–4 pm</dd></div>
+          <div><dt>Saturday–Sunday</dt><dd>8 am–4 pm</dd></div>
+        </dl>
+        <a class="visit-map" href="https://www.google.com/maps/search/?api=1&amp;query=1426+SE+Alder+Street+Portland+OR">Get directions <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+    <div class="visit-window">
+      <svg viewBox="0 0 560 620" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="visit-art-title">
+        <title id="visit-art-title">A ribbed ceramic pour-over dripper, glass coffee server, and ivory cup on a sunlit café counter.</title>
+        <defs>
+          <linearGradient id="visit-light" x2="1" y2="1" gradientUnits="objectBoundingBox">
+            <stop stop-color="#bdac91"/><stop offset=".54" stop-color="#ebddbf"/><stop offset="1" stop-color="#c6ab82"/>
+          </linearGradient>
+          <linearGradient id="visit-wood" x2="0" y2="1">
+            <stop stop-color="#a87c55"/><stop offset="1" stop-color="#735039"/>
+          </linearGradient>
+          <linearGradient id="visit-glaze">
+            <stop stop-color="#b9a58c"/><stop offset=".32" stop-color="#f5e9d2"/><stop offset=".72" stop-color="#e5d4b9"/><stop offset="1" stop-color="#ae9980"/>
+          </linearGradient>
+          <pattern id="visit-grain" patternUnits="userSpaceOnUse" width="7" height="5">
+            <path d="M1 1h1m2 3h1" stroke="#30271d" opacity=".10"/>
+          </pattern>
+        </defs>
+        <rect width="560" height="620" fill="url(#visit-light)"/>
+        <path d="M-30 0h210L0 340H-30zm274 0h151L73 505H0zm214 0h102v45L227 510H106z" fill="#fff5da" opacity=".48"/>
+        <path d="M0 421l560-28v227H0z" fill="url(#visit-wood)"/>
+        <g fill="none" stroke="#684932" opacity=".45">
+          <path d="M0 465l560-38M0 525l560-49M0 602l560-62"/>
+          <path d="M2 505c103-15 156-10 236-24s156-8 261-25M45 572c147-25 257-21 378-43" stroke-width="2"/>
+        </g>
+        <ellipse cx="241" cy="465" rx="119" ry="15" fill="#482e20" opacity=".24"/>
+        <path d="M315 348q65-23 51 31-8 29-45 34" fill="none" stroke="#88745d" stroke-width="13"/>
+        <path d="M315 346q60-20 46 31-8 23-40 31" fill="none" stroke="#e9ddc8" stroke-width="6"/>
+        <path d="M190 321h110q-3 26 10 50l22 62q10 35-83 36-84 1-80-28l24-81q5-20-3-39z" fill="#e2dcc9" fill-opacity=".54" stroke="#887b67" stroke-width="3"/>
+        <path d="M185 400q56 15 132-2l12 37q7 28-79 30-80 1-78-22z" fill="#42281e"/>
+        <ellipse cx="251" cy="400" rx="66" ry="9" fill="#69422c"/>
+        <path d="M199 369l-18 67" stroke="#fff9e5" stroke-width="5" stroke-linecap="round" opacity=".66"/>
+        <rect x="183" y="311" width="127" height="15" rx="7" fill="#8c6143"/>
+        <path d="M158 206q-6-36 26-44l67 6 61-11q25 8 28 49z" fill="#d4b693"/>
+        <path d="M144 200q100 17 206-1l-73 112q-26 10-61 1z" fill="url(#visit-glaze)" stroke="#ab977d" stroke-width="2"/>
+        <ellipse cx="247" cy="200" rx="103" ry="12" fill="#d2bda1"/>
+        <path d="M162 198l22-36 64 13 64-18 21 40q-84 17-171 1z" fill="#dcc19f"/>
+        <g stroke="#ac967b" stroke-width="3" fill="none" opacity=".68">
+          <path d="M167 213q16 41 54 91m-34-90q12 45 43 91m-20-91q5 48 28 92m-6-91q1 43 13 91m11-92q-1 57-4 92m28-93q-4 46-20 93m43-95q-10 49-35 94m59-97q-18 51-52 97"/>
+        </g>
+        <ellipse cx="383" cy="481" rx="73" ry="12" fill="#533a29" opacity=".32"/>
+        <path d="M414 412q40-17 36 13-3 23-36 22" fill="none" stroke="#c4b095" stroke-width="11"/>
+        <path d="M330 402q3 67 23 73 25 11 49-1 17-13 20-72z" fill="url(#visit-glaze)"/>
+        <ellipse cx="376" cy="402" rx="46" ry="11" fill="#f7ebd6"/>
+        <ellipse cx="376" cy="404" rx="39" ry="7" fill="#573526"/>
+        <rect width="560" height="620" fill="url(#visit-grain)" pointer-events="none"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section id="wholesale" class="section-pad" aria-labelledby="wholesale-title">
+  <div class="container ws-layout">
+    <div class="ws-intro reveal">
+      <p class="eyebrow ws-kicker">For restaurant teams</p>
+      <h2 id="wholesale-title">Coffee for your restaurant</h2>
+      <p class="ws-lead">Fresh weekly coffee and hands-on help getting it right before service.</p>
+      <p class="ws-story">Tell us what you serve and how you brew it. We’ll help you choose a coffee, set a delivery rhythm, and dial in a recipe your team can repeat through a busy shift.</p>
+      <div class="ws-signoff" aria-hidden="true">
+        <svg viewBox="0 0 84 44" width="84" height="44" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+          <path d="M13 15h42c-1 12-8 20-21 20S15 27 13 15Z M55 17h5c9 0 6 11-8 11 M5 37h61c-5 3-13 5-29 5S11 40 5 37Z M28 10c-4-4 4-5 1-9 M38 11c-3-3 3-5 2-8"/>
+        </svg>
+      </div>
+    </div>
+    <form class="ws-form reveal" data-demo-form aria-label="Wholesale enquiry" aria-describedby="ws-demo" method="dialog">
+      <div class="ws-pair">
+        <div class="ws-field">
+          <label for="ws-name">Your name</label>
+          <input id="ws-name" name="name" autocomplete="name" required pattern=".*\S.*" data-error-id="ws-name-error">
+          <small id="ws-name-error" class="ws-error">Enter your name</small>
+        </div>
+        <div class="ws-field">
+          <label for="ws-restaurant">Restaurant name</label>
+          <input id="ws-restaurant" name="restaurant" autocomplete="organization" required pattern=".*\S.*" data-error-id="ws-restaurant-error">
+          <small id="ws-restaurant-error" class="ws-error">Enter the name of your restaurant.</small>
+        </div>
+      </div>
+      <div class="ws-field">
+        <label for="ws-email">Work email</label>
+        <input id="ws-email" name="email" type="email" autocomplete="email" required data-error-id="ws-email-error">
+        <small id="ws-email-error" class="ws-error">Enter a valid email address, such as coffee@alderkitchen.com.</small>
+      </div>
+      <div class="ws-field">
+        <label for="ws-volume">Estimated weekly volume <span>(lb)</span></label>
+        <select id="ws-volume" name="volume" required data-error-id="ws-volume-error">
+          <option value="" disabled selected>Choose a range</option>
+          <option>Under 5 lb</option>
+          <option>5–10 lb</option>
+          <option>11–20 lb</option>
+          <option>Over 20 lb</option>
+          <option>Not sure yet</option>
+        </select>
+        <small id="ws-volume-error" class="ws-error">Choose a range or select “Not sure yet”.</small>
+      </div>
+      <div class="ws-field">
+        <label for="ws-notes">Service notes <span>(optional)</span></label>
+        <textarea id="ws-notes" name="notes" rows="3" placeholder="Tell us about your brew setup, service, or opening date."></textarea>
+      </div>
+      <div class="ws-actions">
+        <button type="submit" class="btn btn-primary">Send demo enquiry <span aria-hidden="true">→</span></button>
+        <p id="ws-demo">This form is a demo. Your details won’t be sent.</p>
+      </div>
+      <div role="status" aria-live="polite" aria-atomic="true">
+        <div class="ws-confirmation" data-form-success hidden>
+          <strong>Demo enquiry complete</strong>
+          <p>Thanks for telling us about your restaurant. Nothing was sent. To start a real conversation, email <a href="mailto:hello@emberandoak.coffee">hello@emberandoak.coffee</a>.</p>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<footer id="footer" aria-labelledby="footer-title">
+  <div class="container footer-inner">
+    <div class="footer-identity">
+      <h2 id="footer-title">Ember &amp; Oak <span>Coffee Roasters</span></h2>
+      <address>
+        <p>1426 SE Alder Street, Portland, OR</p>
+        <a href="mailto:hello@emberandoak.coffee">hello@emberandoak.coffee</a>
+      </address>
+    </div>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="#shop-coffee">Shop</a>
+      <a href="#visit-cafe">Café</a>
+      <a href="#wholesale">Wholesale</a>
+    </nav>
+  </div>
+</footer>
+<script>
+try {
+(() => {
+  'use strict';
+
+  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const toggle = document.querySelector('[data-nav-toggle]');
+  const menu = document.querySelector('[data-nav-menu]');
+
+  function setMenu(open) {
+    if (!toggle || !menu) return;
+    menu.classList.toggle('is-open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  }
+
+  if (toggle && menu) {
+    toggle.addEventListener('click', () => setMenu(!menu.classList.contains('is-open')));
+    document.addEventListener('keydown', event => {
+      if (event.defaultPrevented || event.key !== 'Escape' ||
+          !menu.classList.contains('is-open') || document.querySelector('dialog[open]')) return;
+      setMenu(false);
+      if (toggle.getClientRects().length) toggle.focus();
+    });
+  }
+
+  const featured = document.querySelector('[data-product-id="finca-el-roble"]');
+  if (featured && !document.getElementById('finca-el-roble')) featured.id = 'finca-el-roble';
+
+  const reveal = [...document.querySelectorAll('.reveal')];
+  let observer;
+  function enableReveals() {
+    if (observer) observer.disconnect();
+    document.documentElement.classList.remove('js-reveal');
+    if (motion.matches || !('IntersectionObserver' in window) || !reveal.length) return;
+    observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      }
+    });
+    for (const element of reveal) {
+      if (element.getBoundingClientRect().top < window.innerHeight) {
+        element.classList.add('is-visible');
+      } else if (!element.classList.contains('is-visible')) {
+        observer.observe(element);
+      }
+    }
+    document.documentElement.classList.add('js-reveal');
+  }
+  enableReveals();
+  if (motion.addEventListener) motion.addEventListener('change', enableReveals);
+
+  document.addEventListener('click', event => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey ||
+        event.shiftKey || event.altKey || !(event.target instanceof Element)) return;
+    const link = event.target.closest('a[href^="#"]');
+    if (!link || link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
+    let id;
+    try {
+      id = decodeURIComponent(link.hash.slice(1));
+    } catch {
+      return;
+    }
+    const target = id && document.getElementById(id);
+    if (!target) return;
+
+    event.preventDefault();
+    setMenu(false);
+    if (window.location.hash !== link.hash) history.pushState(null, '', link.hash);
+    if (!target.hasAttribute('tabindex')) {
+      target.setAttribute('tabindex', '-1');
+      target.addEventListener('blur', () => target.removeAttribute('tabindex'), { once: true });
+    }
+    const hiddenReveal = target.closest('.reveal');
+    if (hiddenReveal) hiddenReveal.classList.add('is-visible');
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({
+      behavior: motion.matches || link.classList.contains('nav-skip') ? 'instant' : 'smooth',
+      block: 'start'
+    });
+  });
+
+  document.querySelectorAll('[data-demo-form]').forEach(form => {
+    const fields = [...form.querySelectorAll('input, select, textarea')];
+    const success = form.querySelector('[data-form-success]');
+    function showValidity(field) {
+      if (field.validity.valid) field.removeAttribute('aria-invalid');
+      else field.setAttribute('aria-invalid', 'true');
+    }
+
+    for (const field of fields) {
+      const errorId = field.getAttribute('aria-describedby');
+      const error = errorId && document.getElementById(errorId);
+      if (error) error.hidden = true;
+      const update = () => {
+        if (success) success.hidden = true;
+        if (!field.hasAttribute('aria-invalid')) return;
+        showValidity(field);
+        if (error) error.hidden = field.validity.valid;
+      };
+      field.addEventListener('input', update);
+      field.addEventListener('change', update);
+      field.addEventListener('invalid', () => {
+        if (success) success.hidden = true;
+        showValidity(field);
+        if (error) error.hidden = false;
+      });
+    }
+
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      form.reset();
+      if (success) {
+        success.hidden = true;
+        requestAnimationFrame(() => { success.hidden = false; });
+      } else {
+        const message = document.createElement('p');
+        message.setAttribute('role', 'status');
+        form.append(message);
+        requestAnimationFrame(() => {
+          message.textContent = 'Demo enquiry complete. Your details weren’t sent.';
+        });
+      }
+    });
+  });
+
+  const dialog = document.querySelector('[data-cart-dialog]');
+  const items = dialog?.querySelector('[data-cart-items]');
+  const template = dialog?.querySelector('[data-cart-line-template]');
+  if (!dialog || typeof dialog.showModal !== 'function' || !items || !template?.content) return;
+
+  const empty = dialog.querySelector('[data-cart-empty]');
+  const filled = dialog.querySelector('[data-cart-filled]');
+  const confirmation = dialog.querySelector('[data-cart-confirmation]');
+  const subtotal = dialog.querySelector('[data-cart-subtotal]');
+  const counts = document.querySelectorAll('[data-cart-count]');
+  const status = document.querySelector('[data-cart-status]');
+  const closeButton = dialog.querySelector('[data-cart-close]');
+  const schedules = new Map([
+    ['once', 'One-time purchase'],
+    ['2-weeks', 'Every 2 weeks'],
+    ['4-weeks', 'Every 4 weeks']
+  ]);
+  const cart = new Map();
+  const currency = new Intl.NumberFormat('en-US', {
+    style: 'currency', currency: 'USD', minimumFractionDigits: 0
+  });
+  let complete = false;
+  let opener;
+  let announcement;
+
+  function write(root, selector, value) {
+    const node = root.querySelector(selector);
+    if (node) node.textContent = value;
+  }
+
+  function announce(message) {
+    if (!status) return;
+    clearTimeout(announcement);
+    status.textContent = '';
+    announcement = setTimeout(() => { status.textContent = message; }, 50);
+  }
+
+  function render() {
+    let quantity = 0;
+    let total = 0;
+    const rows = new Map();
+    const fragment = document.createDocumentFragment();
+
+    for (const [key, line] of cart) {
+      quantity += line.quantity;
+      total += line.cents * line.quantity;
+      const clone = template.content.cloneNode(true);
+      const row = clone.querySelector('li');
+      if (!row) continue;
+      row.dataset.cartKey = key;
+      rows.set(key, row);
+      write(row, '[data-line-name]', line.name);
+      write(row, '[data-line-schedule]', line.schedule);
+      write(row, '[data-line-quantity]', line.quantity);
+      write(row, '[data-line-total]', currency.format(line.cents * line.quantity / 100));
+      for (const [selector, label] of [
+        ['[data-cart-decrease]', 'Decrease quantity of'],
+        ['[data-cart-increase]', 'Increase quantity of'],
+        ['[data-cart-remove]', 'Remove']
+      ]) {
+        row.querySelector(selector)?.setAttribute(
+          'aria-label', `${label} ${line.name}, ${line.schedule} (quantity ${line.quantity})`
+        );
+      }
+      fragment.append(clone);
+    }
+
+    items.replaceChildren(fragment);
+    counts.forEach(node => { node.textContent = quantity; });
+    if (subtotal) subtotal.textContent = currency.format(total / 100);
+    if (empty) empty.hidden = complete || quantity > 0;
+    if (filled) filled.hidden = complete || quantity === 0;
+    if (confirmation) confirmation.hidden = !complete;
+    return rows;
+  }
+
+  document.querySelectorAll('[data-add-to-cart]').forEach(button => {
+    button.addEventListener('click', () => {
+      const product = button.closest('[data-product-id]');
+      if (!product) return;
+      const { productId, productName, price } = product.dataset;
+      const cents = Math.round(Number(price) * 100);
+      if (!productId || !productName || !Number.isSafeInteger(cents) || cents <= 0) return;
+      const frequency = product.querySelector('[data-frequency]')?.value;
+      const schedule = schedules.get(frequency) || schedules.get('once');
+      const key = `${productId}:${schedule}`;
+      const line = cart.get(key) || { name: productName, schedule, cents, quantity: 0 };
+      line.quantity += 1;
+      cart.set(key, line);
+      complete = false;
+      render();
+      announce(`Added ${productName}, ${schedule.toLowerCase()}.`);
+    });
+  });
+
+  document.querySelectorAll('[data-cart-open]').forEach(button => {
+    if (dialog.id) button.setAttribute('aria-controls', dialog.id);
+    button.addEventListener('click', () => {
+      if (dialog.open) return;
+      opener = button;
+      complete = false;
+      render();
+      dialog.showModal();
+    });
+  });
+
+  dialog.addEventListener('close', () => {
+    if (!dialog.open && opener?.isConnected) opener.focus();
+  });
+
+  dialog.addEventListener('click', event => {
+    if (!(event.target instanceof Element)) return;
+    const button = event.target.closest('button');
+    if (!button || !dialog.contains(button)) return;
+    if (button.matches('[data-cart-close]')) {
+      dialog.close();
+      return;
+    }
+    if (button.matches('[data-demo-checkout]')) {
+      if (!cart.size || !confirmation) return;
+      cart.clear();
+      complete = true;
+      render();
+      (confirmation.querySelector('[tabindex="-1"]') || closeButton)?.focus();
+      return;
+    }
+
+    const row = button.closest('[data-cart-key]');
+    const key = row?.dataset.cartKey;
+    const line = cart.get(key);
+    if (!line) return;
+    const nextKey = (row.nextElementSibling || row.previousElementSibling)?.dataset.cartKey;
+    let selector;
+    if (button.matches('[data-cart-increase]')) {
+      selector = '[data-cart-increase]';
+      line.quantity += 1;
+    } else if (button.matches('[data-cart-decrease]')) {
+      selector = '[data-cart-decrease]';
+      line.quantity -= 1;
+      if (line.quantity === 0) cart.delete(key);
+    } else if (button.matches('[data-cart-remove]')) {
+      selector = '[data-cart-remove]';
+      cart.delete(key);
+    } else {
+      return;
+    }
+
+    const rows = render();
+    (rows.get(key)?.querySelector(selector) ||
+      rows.get(nextKey)?.querySelector(selector) ||
+      (!cart.size && empty?.querySelector('[data-cart-close]')) ||
+      closeButton)?.focus();
+  });
+
+  render();
+})();
+} catch (e) { console.error(e); }
+</script>
+</body>
+</html>

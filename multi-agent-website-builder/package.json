@@ -1,0 +1,16 @@
+{
+  "name": "multi-agent-website-builder",
+  "version": "1.0.0",
+  "description": "A team of AI agents (planner, architect, designer, copywriter, developers, QA, evaluator) that build a website from a prompt, with live multi-cursor visualisation.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node tests/smoke.mjs"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.12.0"
+  }
+}

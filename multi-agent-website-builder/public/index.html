@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgentForge — Multi-Agent Website Builder</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%237c5cff'/><path d='M8 22l6-12 4 8 2-4 4 8' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="#builder"><span class="logo-mark">◆</span> AgentForge <small>multi-agent website builder</small></a>
+    <nav class="tabs" aria-label="Main">
+      <a href="#builder" data-view="builder">Builder</a>
+      <a href="#agents" data-view="agents">Agents</a>
+      <a href="#settings" data-view="settings">Settings</a>
+    </nav>
+    <a class="provider-pill" id="provider-pill" href="#settings"></a>
+  </header>
+
+  <main>
+    <!-- ============================== BUILDER ============================== -->
+    <section id="view-builder" class="view builder">
+      <aside class="left">
+        <div class="panel-h">Team <span id="team-count" class="muted"></span><a class="mini-link" href="#agents">Configure</a></div>
+        <div id="roster" class="roster"></div>
+        <div class="panel-h">Activity <button id="clear-log" class="mini-link" type="button">Clear</button></div>
+        <div id="feed" class="feed" aria-live="polite"></div>
+        <form id="composer" class="composer">
+          <div id="mode-row" class="mode-row" hidden>
+            <label><input type="radio" name="mode" value="refine" checked> Refine this site</label>
+            <label><input type="radio" name="mode" value="new"> New site</label>
+          </div>
+          <label class="sr-only" for="prompt">Describe your website</label>
+          <textarea id="prompt" rows="4" placeholder="Describe the website you want… e.g. “A modern landing page for a specialty coffee roaster in Portland with an online shop and wholesale enquiry form”"></textarea>
+          <div class="composer-row">
+            <div id="examples" class="examples"></div>
+          </div>
+          <div class="composer-row end">
+            <small class="muted">⌘/Ctrl + Enter</small>
+            <button id="stop-btn" class="btn danger" type="button" hidden>■ Stop</button>
+            <button id="build-btn" class="btn primary" type="submit">Build with agents ▸</button>
+          </div>
+        </form>
+      </aside>
+
+      <section class="center">
+        <div class="stagebar">
+          <div id="pipeline" class="pipeline"></div>
+          <div class="tools">
+            <div class="seg" role="group" aria-label="View">
+              <button class="active" data-mode="preview" type="button">Preview</button>
+              <button data-mode="code" type="button">Code</button>
+            </div>
+            <div class="seg" role="group" aria-label="Device">
+              <button class="active" data-device="desktop" type="button" title="Desktop">🖥</button>
+              <button data-device="tablet" type="button" title="Tablet">▭</button>
+              <button data-device="mobile" type="button" title="Phone">📱</button>
+            </div>
+            <label class="chk small"><input type="checkbox" id="follow"> Follow agents</label>
+            <button id="try-btn" class="btn sm" type="button" data-needs-site disabled>▶ Try it</button>
+            <button id="open-btn" class="btn sm" type="button" data-needs-site disabled>Open ↗</button>
+            <button id="download-btn" class="btn sm" type="button" data-needs-site disabled>Download</button>
+            <button id="copy-btn" class="btn sm" type="button" data-needs-site disabled>Copy HTML</button>
+          </div>
+        </div>
+        <div class="stage" id="stage" data-device="desktop">
+          <div class="browser">
+            <div class="browser-bar"><i></i><i></i><i></i><span id="browser-url">preview</span></div>
+            <div class="frame-holder">
+              <!-- Builder canvas: no scripts, so generated code can never reach the app -->
+              <iframe id="frame" title="Website being built" sandbox="allow-same-origin"></iframe>
+              <!-- Interactive mode: scripts allowed, but with an opaque origin -->
+              <iframe id="live" title="Interactive preview" sandbox="allow-scripts allow-forms allow-popups" hidden></iframe>
+            </div>
+          </div>
+          <div class="overlay" id="overlay" aria-hidden="true"></div>
+          <div class="code-wrap" id="code-wrap" hidden>
+            <div class="code-tabs" id="code-tabs">
+              <button class="active" data-file="index.html" type="button">index.html</button>
+              <button data-file="styles.css" type="button">styles.css</button>
+              <button data-file="script.js" type="button">script.js</button>
+            </div>
+            <pre id="code" class="code"></pre>
+          </div>
+        </div>
+      </section>
+
+      <aside class="right">
+        <div class="itabs" role="tablist">
+          <button class="itab active" data-insp="plan" type="button">Plan</button>
+          <button class="itab" data-insp="design" type="button">Design</button>
+          <button class="itab" data-insp="eval" type="button">Evaluation</button>
+        </div>
+        <div class="insp" id="insp-plan"><p class="muted">The plan appears here once Atlas has read your brief.</p></div>
+        <div class="insp" id="insp-design" hidden><p class="muted">Design tokens appear here.</p></div>
+        <div class="insp" id="insp-eval" hidden><p class="muted">The evaluator scores the site once it is built.</p></div>
+      </aside>
+    </section>
+
+    <!-- ============================== AGENTS =============================== -->
+    <section id="view-agents" class="view" hidden></section>
+
+    <!-- ============================= SETTINGS ============================== -->
+    <section id="view-settings" class="view" hidden></section>
+  </main>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

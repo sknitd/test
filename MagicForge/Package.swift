@@ -6,7 +6,7 @@ import Foundation
 // -------------------------
 // Portable modules (build + test on macOS AND Linux): MFUtilities, MFCore, MFGestures,
 // MFProfiles, MFAutomation, MFIntegrations, MFEngine.
-// macOS-only modules: MFDevices, MFInput, MFActions, MFUI, the MagicForge app and mfprobe.
+// macOS-only modules: MFDevices, MFInput, MFActions, MFUI, MFApp, the MagicForgeApp executable and mfprobe.
 //
 // MF_ONLY=<ModuleName> restricts the graph to MFUtilities + MFCore + that one module and its
 // test target, so one module can be built/tested while others are mid-edit:
@@ -59,15 +59,18 @@ if only == nil {
         .target(name: "MFActions", dependencies: ["MFCore", "MFUtilities"], path: "Sources/Actions"),
         .target(name: "MFUI", dependencies: ["MFCore", "MFUtilities", "MFEngine", "MFGestures", "MFProfiles"],
                 path: "Sources/UI"),
-        .executableTarget(name: "MagicForge",
-                          dependencies: ["MFCore", "MFUtilities", "MFEngine", "MFGestures", "MFProfiles", "MFAutomation",
-                                         "MFIntegrations", "MFDevices", "MFInput", "MFActions", "MFUI"],
-                          path: "Sources/App"),
+        .target(name: "MFApp",
+                dependencies: ["MFCore", "MFUtilities", "MFEngine", "MFGestures", "MFProfiles", "MFAutomation",
+                               "MFIntegrations", "MFDevices", "MFInput", "MFActions", "MFUI"],
+                path: "Sources/App"),
+        // Thin entry point. The Xcode app target compiles the same main.swift and links MFApp.
+        .executableTarget(name: "MagicForgeApp", dependencies: ["MFApp"], path: "Sources/AppMain"),
         .executableTarget(name: "mfprobe", dependencies: ["MFCore", "MFUtilities", "MFDevices", "MFInput", "MFGestures"],
                           path: "Sources/Probe"),
     ]
     products += [
-        .executable(name: "MagicForge", targets: ["MagicForge"]),
+        .library(name: "MFApp", targets: ["MFApp"]),
+        .executable(name: "MagicForgeApp", targets: ["MagicForgeApp"]),
         .executable(name: "mfprobe", targets: ["mfprobe"]),
     ]
 }

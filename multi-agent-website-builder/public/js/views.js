@@ -24,10 +24,36 @@ function providerOptions(selected, { includeDefault = true } = {}) {
   return opts.map(([v, l, dis]) => `<option value="${v}" ${v === selected ? "selected" : ""} ${dis && v !== selected ? "disabled" : ""}>${esc(l)}</option>`).join("");
 }
 
+/** Curated models (from each provider's docs) + any extra models your key can see. */
 function modelList(id) {
   if (!state.catalog[id]) return [];
+  const curated = state.catalog[id].models || [];
+  const known = new Set(curated.map((m) => m.id));
+  const live = (providerCfg(id).status?.models || []).filter((m) => !known.has(m)).map((m) => ({ id: m, name: m, note: "available to your key", live: true }));
+  return [...curated, ...live];
+}
+
+const modelOptions = (models) =>
+  models.map((m) => `<option value="${esc(m.id)}" label="${esc(m.live ? `${m.id} — from your account` : `${m.name}${m.status ? ` (${m.status})` : ""} — ${m.note || m.tier || ""}`)}"></option>`).join("");
+
+function modelCatalogHtml(id) {
+  const def = state.catalog[id];
+  const curated = def.models || [];
   const cfg = providerCfg(id);
-  return [...new Set([...(state.catalog[id].suggestedModels || []), ...(cfg.status?.models || [])])];
+  const avail = new Set(cfg.status?.models || []);
+  const extra = (cfg.status?.models || []).filter((m) => !curated.some((c) => c.id === m)).length;
+  if (!curated.length && !extra) return id === "custom" ? `<p class="hint">Enter the model id your endpoint serves. "Save &amp; test" lists them.</p>` : "";
+  const current = cfg.model || def.defaultModel;
+  return `<details class="mlist"><summary>${curated.length} recommended model${curated.length === 1 ? "" : "s"}${extra ? ` · +${extra} more on your account` : ""} <small>checked against the docs ${esc(state.modelsChecked || "")}</small></summary>
+    <ul>${curated
+      .map(
+        (m) => `<li class="${m.id === current ? "cur" : ""}">
+        <div><b>${esc(m.name)}</b>${m.default ? ` <span class="tag def">default</span>` : ""}${m.status ? ` <span class="tag">${esc(m.status)}</span>` : ""} <span class="tag tier">${esc(m.tier)}</span>${cfg.status?.ok ? (avail.has(m.id) ? ` <span class="tag ok" title="Your key can use this model">✓ available</span>` : id === "ollama" ? ` <span class="tag" title="Not downloaded yet">not pulled</span>` : "") : ""}
+          <code>${esc(m.id)}</code><small>${esc(m.note || "")}${m.ram ? ` · needs ${esc(m.ram)} RAM` : ""}</small>${id === "ollama" ? `<small class="pull">ollama pull ${esc(m.id)}</small>` : ""}</div>
+        <button class="btn ghost sm" type="button" data-use="${esc(m.id)}" ${m.id === current ? "disabled" : ""}>${m.id === current ? "In use" : "Use"}</button>
+      </li>`,
+      )
+      .join("")}</ul></details>`;
 }
 
 // ===================================================================== agents
@@ -87,6 +113,12 @@ export function renderAgents() {
   };
 }
 
+function agentDefaultModel(a) {
+  const pid = !a.provider || a.provider === "default" ? state.settings.defaultProvider : a.provider;
+  if (pid === "demo") return "offline demo (no model)";
+  return providerCfg(pid).model || state.catalog[pid]?.defaultModel || "provider default";
+}
+
 function agentCard(a) {
   const contractKey = a.kind === "custom" ? `custom_${a.customStage || "review"}` : a.kind;
   const models = modelList(a.provider === "default" ? state.settings.defaultProvider : a.provider);
@@ -111,7 +143,7 @@ function agentCard(a) {
     <div class="a-pane" data-pane="create" hidden><textarea data-f="create" rows="6" aria-label="What this agent creates">${esc(a.create)}</textarea></div>
     <div class="a-pane" data-pane="model" hidden>
       <label>Provider<select data-f="provider">${providerOptions(a.provider || "default")}</select></label>
-      <label>Model <small>(blank = provider default)</small><input data-f="model" list="ml-${a.id}" value="${esc(a.model)}" placeholder="${esc(state.catalog[a.provider]?.defaultModel || "provider default")}"><datalist id="ml-${a.id}">${models.map((m) => `<option value="${esc(m)}">`).join("")}</datalist></label>
+      <label>Model <small>(blank = provider default)</small><input data-f="model" list="ml-${a.id}" value="${esc(a.model)}" placeholder="${esc(agentDefaultModel(a))}"><datalist id="ml-${a.id}">${modelOptions(models)}</datalist></label>
       <div class="two">
         <label>Reasoning effort<select data-f="effort">${["low", "medium", "high", "xhigh", "max"].map((e) => `<option ${a.effort === e ? "selected" : ""}>${e}</option>`).join("")}</select></label>
         <label>Temperature <output>${a.temperature}</output><input type="range" min="0" max="1" step="0.1" data-f="temperature" value="${a.temperature}"></label>
@@ -152,7 +184,8 @@ function bindAgentCard(card) {
       if (["enabled", "name", "icon", "color", "customStage"].includes(f)) refreshFlow();
       if (f === "provider") {
         const models = modelList(v === "default" ? state.settings.defaultProvider : v);
-        card.querySelector("datalist").innerHTML = models.map((m) => `<option value="${esc(m)}">`).join("");
+        card.querySelector("datalist").innerHTML = modelOptions(models);
+        card.querySelector('[data-f="model"]').placeholder = agentDefaultModel(agent);
       }
     };
     el.addEventListener(el.type === "checkbox" || el.tagName === "SELECT" ? "change" : "input", handler);
@@ -277,13 +310,16 @@ function providerCard(id) {
       <label class="switch" title="Enable"><input type="checkbox" data-p="enabled" ${cfg.enabled ? "checked" : ""}><span></span></label></header>
     <label>API key<div class="keyrow"><input type="password" data-p="apiKey" autocomplete="off" spellcheck="false" placeholder="${esc(keyPh)}"><button class="btn ghost sm" data-show type="button" aria-label="Show key">👁</button></div></label>
     <label>Base URL<input data-p="baseUrl" value="${esc(cfg.baseUrl)}" placeholder="${esc(def.baseUrl || "https://your-endpoint/v1")}"></label>
-    <label>Default model<input data-p="model" list="pm-${id}" value="${esc(cfg.model)}" placeholder="${esc(def.defaultModel || "model id")}"><datalist id="pm-${id}">${models.map((m) => `<option value="${esc(m)}">`).join("")}</datalist></label>
+    <label>Default model<input data-p="model" list="pm-${id}" value="${esc(cfg.model)}" placeholder="${esc(def.defaultModel || "model id")}"><datalist id="pm-${id}">${modelOptions(models)}</datalist></label>
+    ${id === "ollama" ? `<p class="hint">Runs models on your own computer, no key needed. Install <a href="https://ollama.com/download" target="_blank" rel="noopener">Ollama</a>, run <code>ollama pull ${esc(def.defaultModel)}</code>, then Save &amp; test. The builder's server must run on the same machine.</p>` : ""}
+    ${id === "custom" ? `<p class="hint">Any OpenAI-compatible server, e.g. LM Studio <code>http://localhost:1234/v1</code>, llama.cpp <code>http://localhost:8080/v1</code> or vLLM <code>http://localhost:8000/v1</code>.</p>` : ""}
+    ${modelCatalogHtml(id)}
     <div class="pstatus">${statusHtml(cfg)}</div>
     <footer>
       <button class="btn primary sm" data-test>Save &amp; test connection</button>
       <button class="btn sm" data-save>Save</button>
       ${cfg.hasKey ? `<button class="btn ghost sm danger" data-clear>Remove key</button>` : ""}
-      ${def.docs ? `<a class="link" href="${esc(def.docs)}" target="_blank" rel="noopener">Get a key ↗</a>` : ""}
+      ${def.docs ? `<a class="link" href="${esc(def.docs)}" target="_blank" rel="noopener">${def.needsKey ? "Get a key ↗" : "Docs ↗"}</a>` : ""}
     </footer>
   </article>`;
 }
@@ -297,6 +333,20 @@ function bindProviderCard(card) {
     await saveProvider(id, patch());
     val("apiKey").value = "";
   };
+  card.querySelectorAll("[data-use]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      val("model").value = b.dataset.use;
+      try {
+        await doSave();
+      } catch (e) {
+        status.innerHTML = `<span class="pill bad">Error</span><small class="err-text">${esc(e.message)}</small>`;
+        return;
+      }
+      const open = card.querySelector(".mlist")?.open;
+      renderSettings();
+      if (open) document.querySelector(`.pcard[data-id="${id}"] .mlist`)?.setAttribute("open", "");
+    }),
+  );
   card.querySelector("[data-show]").onclick = () => {
     const k = val("apiKey");
     k.type = k.type === "password" ? "text" : "password";

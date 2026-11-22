@@ -53,6 +53,7 @@ async function api(method, url, body) {
 export async function loadProviders() {
   const j = await api("GET", "/api/providers");
   state.catalog = j.catalog;
+  state.modelsChecked = j.modelsChecked;
   state.providers = j.providers;
   state.serverOnline = true;
   return j;

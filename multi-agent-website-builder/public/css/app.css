@@ -312,6 +312,20 @@ code { font-family: var(--mono); font-size: .9em; background: var(--panel-2); pa
 .pill.bad { color: var(--bad); background: rgba(220, 38, 38, .1); border-color: rgba(220, 38, 38, .3); }
 .pcard footer { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
 .link { font-size: 12.5px; font-weight: 600; margin-left: auto; }
+.pcard .hint code { font-size: 11px; }
+.mlist { border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); }
+.mlist summary { cursor: pointer; padding: .45rem .65rem; font-size: 12.5px; font-weight: 650; }
+.mlist summary small { font-weight: 500; color: var(--muted); margin-left: .3rem; }
+.mlist ul { list-style: none; margin: 0; padding: 0 .4rem .4rem; display: grid; gap: 2px; max-height: 320px; overflow: auto; }
+.mlist li { display: flex; gap: .5rem; align-items: center; justify-content: space-between; padding: .4rem .35rem; border-radius: 7px; font-size: 12.5px; }
+.mlist li.cur { background: color-mix(in srgb, var(--brand) 9%, transparent); }
+.mlist li > div { min-width: 0; }
+.mlist code { display: block; background: none; padding: 0; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+.mlist small { display: block; color: var(--muted); font-size: 11.5px; }
+.mlist .pull { font-family: var(--mono); font-size: 10.5px; }
+.tag { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.tag.def { color: var(--brand); border-color: color-mix(in srgb, var(--brand) 40%, var(--line)); }
+.tag.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); }
 
 /* ----------------------------------------------------------- responsive */
 @media (max-width: 1280px) {

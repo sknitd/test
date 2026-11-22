@@ -10,14 +10,13 @@
 // If no key is saved, the matching environment variable is used (see ENV_KEYS).
 
 import Anthropic from "@anthropic-ai/sdk";
+import { MODELS, MODELS_CHECKED } from "./models.js";
 
 export const PROVIDERS = {
   anthropic: {
     label: "Anthropic (Claude)",
     kind: "anthropic",
     baseUrl: "https://api.anthropic.com",
-    defaultModel: "claude-opus-5-5",
-    suggestedModels: ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5", "claude-fable-5-2"],
     needsKey: true,
     docs: "https://platform.claude.com/settings/keys",
   },
@@ -25,8 +24,6 @@ export const PROVIDERS = {
     label: "OpenAI",
     kind: "openai",
     baseUrl: "https://api.openai.com/v1",
-    defaultModel: "gpt-5-mini",
-    suggestedModels: [],
     needsKey: true,
     docs: "https://platform.openai.com/api-keys",
   },
@@ -34,8 +31,6 @@ export const PROVIDERS = {
     label: "Google Gemini",
     kind: "gemini",
     baseUrl: "https://generativelanguage.googleapis.com/v1beta",
-    defaultModel: "gemini-2.5-flash",
-    suggestedModels: [],
     needsKey: true,
     docs: "https://aistudio.google.com/apikey",
   },
@@ -43,8 +38,6 @@ export const PROVIDERS = {
     label: "OpenRouter",
     kind: "openai-compatible",
     baseUrl: "https://openrouter.ai/api/v1",
-    defaultModel: "openrouter/auto",
-    suggestedModels: [],
     needsKey: true,
     docs: "https://openrouter.ai/keys",
   },
@@ -52,8 +45,6 @@ export const PROVIDERS = {
     label: "Groq",
     kind: "openai-compatible",
     baseUrl: "https://api.groq.com/openai/v1",
-    defaultModel: "llama-3.3-70b-versatile",
-    suggestedModels: [],
     needsKey: true,
     docs: "https://console.groq.com/keys",
   },
@@ -61,17 +52,13 @@ export const PROVIDERS = {
     label: "Mistral",
     kind: "openai-compatible",
     baseUrl: "https://api.mistral.ai/v1",
-    defaultModel: "mistral-large-latest",
-    suggestedModels: [],
     needsKey: true,
     docs: "https://console.mistral.ai/api-keys",
   },
   deepseek: {
     label: "DeepSeek",
     kind: "openai-compatible",
-    baseUrl: "https://api.deepseek.com/v1",
-    defaultModel: "deepseek-chat",
-    suggestedModels: [],
+    baseUrl: "https://api.deepseek.com",
     needsKey: true,
     docs: "https://platform.deepseek.com/api_keys",
   },
@@ -79,8 +66,6 @@ export const PROVIDERS = {
     label: "xAI (Grok)",
     kind: "openai-compatible",
     baseUrl: "https://api.x.ai/v1",
-    defaultModel: "grok-4",
-    suggestedModels: [],
     needsKey: true,
     docs: "https://console.x.ai",
   },
@@ -88,8 +73,6 @@ export const PROVIDERS = {
     label: "Together AI",
     kind: "openai-compatible",
     baseUrl: "https://api.together.xyz/v1",
-    defaultModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-    suggestedModels: [],
     needsKey: true,
     docs: "https://api.together.ai/settings/api-keys",
   },
@@ -97,8 +80,6 @@ export const PROVIDERS = {
     label: "Ollama (local)",
     kind: "openai-compatible",
     baseUrl: "http://localhost:11434/v1",
-    defaultModel: "llama3.1",
-    suggestedModels: [],
     needsKey: false,
     docs: "https://ollama.com",
   },
@@ -106,12 +87,18 @@ export const PROVIDERS = {
     label: "Custom (OpenAI-compatible)",
     kind: "openai-compatible",
     baseUrl: "",
-    defaultModel: "",
-    suggestedModels: [],
     needsKey: false,
     docs: "",
   },
 };
+
+// Attach the curated model catalog (models.js) and derive each default model.
+for (const [id, p] of Object.entries(PROVIDERS)) {
+  p.models = MODELS[id] || [];
+  p.defaultModel = (p.models.find((m) => m.default) || p.models[0] || { id: "" }).id;
+  p.suggestedModels = p.models.map((m) => m.id); // kept for older UI code
+}
+export { MODELS_CHECKED };
 
 const ENV_KEYS = {
   anthropic: "ANTHROPIC_API_KEY",
@@ -263,6 +250,11 @@ async function anthropicChat({ apiKey, baseUrl, model, system, messages, maxToke
 
 // ------------------------------------------------------- OpenAI-compatible
 
+// Live model lists include embeddings, speech, image and moderation models that
+// can't write a website — hide those.
+const NON_CHAT = /(embed|whisper|tts|transcri|dall-e|image|moderation|audio|realtime|speech|rerank|guard|safeguard|davinci|babbage|ocr|search-preview|computer-use|sora|veo|imagen|lyria|:batch)/i;
+export const isChatModel = (id) => !NON_CHAT.test(id);
+
 function bearer(apiKey) {
   return apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
 }
@@ -272,7 +264,7 @@ async function openaiTest({ apiKey, baseUrl, def }) {
   const res = await fetchWithTimeout(`${baseUrl}/models`, { headers: { ...bearer(apiKey) } }, 20_000);
   if (!res.ok) throw new ProviderError(await readError(res), res.status);
   const j = await res.json().catch(() => ({}));
-  const models = (j.data || j.models || []).map((m) => m.id || m.name).filter(Boolean).sort();
+  const models = (j.data || j.models || []).map((m) => m.id || m.name).filter(Boolean).filter(isChatModel).sort();
   return { ok: true, models, message: `Connected — ${models.length} models available` };
 }
 
@@ -282,13 +274,8 @@ async function openaiChat({ apiKey, baseUrl, model, system, messages, maxTokens,
     model,
     messages: [{ role: "system", content: system }, ...messages],
   };
-  if (providerId === "openai") {
-    // Newer OpenAI models use max_completion_tokens and only accept the default temperature.
-    body.max_completion_tokens = maxTokens || 16000;
-  } else {
-    body.max_tokens = maxTokens || 8000;
-    if (typeof temperature === "number") body.temperature = temperature;
-  }
+  body.max_tokens = maxTokens || 8000;
+  if (typeof temperature === "number") body.temperature = temperature;
   const headers = { "Content-Type": "application/json", ...bearer(apiKey) };
   if (providerId === "openrouter") {
     headers["X-Title"] = "Multi-Agent Website Builder";
@@ -307,6 +294,46 @@ async function openaiChat({ apiKey, baseUrl, model, system, messages, maxTokens,
   };
 }
 
+// ------------------------------------------------------- OpenAI Responses API
+// OpenAI's current models are documented for the Responses API.
+
+const OPENAI_EFFORTS = new Set(["low", "medium", "high", "xhigh", "max"]);
+
+async function openaiResponses({ apiKey, baseUrl, model, system, messages, maxTokens, effort }) {
+  if (!apiKey) throw new ProviderError("No API key provided.", 400);
+  const body = {
+    model,
+    instructions: system,
+    input: messages.map((m) => ({ role: m.role, content: m.content })),
+    max_output_tokens: maxTokens || 16000,
+  };
+  if (OPENAI_EFFORTS.has(effort)) body.reasoning = { effort };
+  const res = await fetchWithTimeout(`${baseUrl}/responses`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...bearer(apiKey) },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new ProviderError(await readError(res), res.status);
+  const j = await res.json();
+  let text = "";
+  let thinking = "";
+  for (const item of j.output || []) {
+    if (item.type === "message") for (const c of item.content || []) {
+      if (c.type === "output_text") text += c.text;
+      else if (c.type === "refusal") throw new ProviderError(`The model declined this request: ${c.refusal}`, 422);
+    }
+    if (item.type === "reasoning") for (const r of item.summary || []) thinking += (r.text || "") + "\n";
+  }
+  if (!text && typeof j.output_text === "string") text = j.output_text;
+  return {
+    text,
+    thinking: thinking.trim(),
+    model: j.model || model,
+    stopReason: j.status === "incomplete" ? `incomplete: ${j.incomplete_details?.reason || "unknown"}` : j.status,
+    usage: { input: j.usage?.input_tokens, output: j.usage?.output_tokens },
+  };
+}
+
 // ------------------------------------------------------------------ Gemini
 
 async function geminiTest({ apiKey, baseUrl }) {
@@ -316,7 +343,8 @@ async function geminiTest({ apiKey, baseUrl }) {
   const j = await res.json();
   const models = (j.models || [])
     .filter((m) => (m.supportedGenerationMethods || []).includes("generateContent"))
-    .map((m) => m.name.replace(/^models\//, ""));
+    .map((m) => m.name.replace(/^models\//, ""))
+    .filter(isChatModel);
   return { ok: true, models, message: `Connected — ${models.length} models available` };
 }
 
@@ -367,5 +395,6 @@ export async function chat(providerId, cfg = {}, stored = {}) {
   const args = { ...cfg, apiKey, baseUrl, def, providerId, model };
   if (def.kind === "anthropic") return anthropicChat(args);
   if (def.kind === "gemini") return geminiChat(args);
+  if (def.kind === "openai") return openaiResponses(args);
   return openaiChat(args);
 }

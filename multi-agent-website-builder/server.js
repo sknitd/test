@@ -9,7 +9,7 @@ import http from "node:http";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { PROVIDERS, chat, testProvider, serverKeyStatus } from "./providers.js";
+import { PROVIDERS, MODELS_CHECKED, chat, testProvider, serverKeyStatus } from "./providers.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(here, "public");
@@ -113,7 +113,7 @@ const server = http.createServer(async (req, res) => {
   const { pathname } = new URL(req.url, "http://x");
   try {
     if (pathname === "/api/providers" && req.method === "GET") {
-      return send(res, 200, { catalog: PROVIDERS, providers: publicProviders() });
+      return send(res, 200, { catalog: PROVIDERS, providers: publicProviders(), modelsChecked: MODELS_CHECKED });
     }
 
     // Save provider settings. apiKey: string sets it, "" leaves it, clearKey removes it.

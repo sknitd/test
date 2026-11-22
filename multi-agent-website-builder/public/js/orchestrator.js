@@ -6,7 +6,7 @@
 
 import { state, sleep, speedFactor, resolveAgentProvider, providerLabel } from "./store.js";
 import { RUBRIC } from "./agents.js";
-import { systemPrompt, callProvider, parseJson, parseSection, extractTag } from "./llm.js";
+import { systemPrompt, callProvider, parseJson, parseSection, extractTag, PLACEHOLDER_RE } from "./llm.js";
 import { emptySite, normalizeTokens, assembleDocument } from "./site.js";
 import { runChecks } from "./checks.js";
 import * as demo from "./demo.js";
@@ -53,7 +53,7 @@ export class Orchestrator {
    * Run one agent step. `llm` describes the real call; `fallback` produces the
    * offline result. Returns { data, thinking, source }.
    */
-  async step(agent, { contract, user, parse = "json", fallback, label }) {
+  async step(agent, { contract, user, parse = "json", fallback, label, validate }) {
     this.check();
     const a = agent || SYSTEM_AGENT;
     const { provider, model } = agent ? resolveAgentProvider(agent) : { provider: "demo", model: "offline" };
@@ -66,18 +66,41 @@ export class Orchestrator {
       this.ui.usage(a, { provider: "demo", model: "offline", ms: performance.now() - started });
       return { data, thinking: "", source: "demo" };
     }
-    try {
-      const res = await callProvider(a, { system: systemPrompt(a, contract), user });
-      this.check();
+    const system = systemPrompt(a, contract);
+    const interpret = (text) => {
       let data;
-      if (parse === "json") data = parseJson(res.text);
-      else if (parse === "section") data = parseSection(res.text, label);
+      if (parse === "json") data = parseJson(text);
+      else if (parse === "section") data = parseSection(text, label);
       else if (parse === "js") {
-        const js = extractTag(res.text, "js");
+        const js = extractTag(text, "js");
         if (!js) throw new Error("Response did not contain a <js> block");
-        data = { thoughts: extractTag(res.text, "thoughts") || "", js: js.replace(/<\/?script[^>]*>/gi, "") };
+        data = { thoughts: extractTag(text, "thoughts") || "", js: js.replace(/<\/?script[^>]*>/gi, "") };
       }
+      if (validate) validate(data);
+      return data;
+    };
+    try {
+      let res = await callProvider(a, { system, user });
+      this.check();
       this.ui.usage(a, { provider, model: res.model || model, ms: res.latencyMs, usage: res.usage });
+      let data;
+      try {
+        data = interpret(res.text);
+      } catch (parseErr) {
+        // One corrective retry: show the model its own answer and what was wrong with it.
+        this.ui.log({ agent: a, type: "warn", title: "Output rejected — asking for a corrected version", text: parseErr.message });
+        res = await callProvider(a, {
+          system,
+          messages: [
+            { role: "user", content: user },
+            { role: "assistant", content: res.text },
+            { role: "user", content: `Your previous response could not be used: ${parseErr.message}\nReply again with the complete result, following the output contract and project rules exactly.` },
+          ],
+        });
+        this.check();
+        this.ui.usage(a, { provider, model: res.model || model, ms: res.latencyMs, usage: res.usage });
+        data = interpret(res.text);
+      }
       return { data, thinking: res.thinking || "", source: provider };
     } catch (e) {
       if (e instanceof Aborted) throw e;
@@ -326,6 +349,13 @@ export class Orchestrator {
         contract: "copywriter",
         user: `Plan:\n${planJson}`,
         fallback: () => demo.demoCopy({ ...site, plan: { ...site.plan, sections: targets } }),
+        validate: (d) => {
+          const strings = [];
+          const walk = (v) => (typeof v === "string" ? strings.push(v) : v && typeof v === "object" && Object.values(v).forEach(walk));
+          walk(d?.copy);
+          const m = strings.map((t) => t.match(PLACEHOLDER_RE)).find(Boolean);
+          if (m) throw new Error(`The copy contains placeholder syntax ("${m[0]}"). Write finished copy and invent plausible details where needed.`);
+        },
       });
       const fb = demo.demoCopy({ ...site, plan: { ...site.plan, sections: targets } }).copy;
       const copy = res.data?.copy && typeof res.data.copy === "object" ? res.data.copy : {};

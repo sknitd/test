@@ -161,6 +161,10 @@ export async function runChecks(doc, site) {
   const missingSections = site.sections.filter((s) => !s.html || !doc.querySelector(`[data-wb="${s.id}"] > *`));
   add({ id: "complete", group: "code", label: "All planned sections built", pass: missingSections.length === 0, detail: missingSections.length ? `Missing: ${missingSections.map((s) => s.id).join(", ")}` : `${site.sections.length}/${site.sections.length} built`, fix: "Build the missing section.", sectionId: missingSections[0]?.id, severity: "high" });
 
+  const leftover = (doc.body.innerText || "").match(/\{%|%\}|\{\{|\}\}|\{\s*[a-z_][a-z0-9_.]*\s*\}|lorem ipsum/i);
+  const leftoverSection = leftover && site.sections.find((s) => (s.html || "").includes(leftover[0]))?.id;
+  add({ id: "placeholders", group: "code", label: "No placeholder or template syntax", pass: !leftover, detail: leftover ? `Found "${leftover[0]}"${leftoverSection ? ` in #${leftoverSection}` : ""}` : "All content is final", fix: "Replace template/placeholder syntax with real, self-contained content.", sectionId: leftoverSection, severity: "high" });
+
   // --- Prompt coverage (used for fidelity)
   const kc = keywordCoverage(site.prompt, doc.body.innerText || "");
 

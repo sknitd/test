@@ -3,6 +3,14 @@
 import { CONTRACTS, KINDS } from "./agents.js";
 import { state, resolveAgentProvider } from "./store.js";
 
+// Shared ground rules for every agent. Without these, strong models tend to leave
+// placeholders for "unverified" facts or reach for real e-commerce / CMS
+// integrations, which can't work in a self-contained page.
+export const PROJECT_RULES = `- The deliverable is ONE self-contained static web page: plain HTML, CSS and vanilla JavaScript. There is no backend, CMS, database, e-commerce platform or build step.
+- Never use template or placeholder syntax of any kind ({{ }}, {% %}, {name}, [Your text], TBD, lorem ipsum, "coming soon" stand-ins for missing facts).
+- When the request doesn't give a detail (address, opening hours, prices, product names, people, phone, email), invent plausible, realistic sample content that fits the brand. This is expected — the owner will edit it later.
+- Interactive features (cart, subscription picker, booking, forms) are front-end demos: they work in the page and show a friendly confirmation; they do not need a real payment or API.`;
+
 export function systemPrompt(agent, contractKey) {
   const team = state.agents
     .filter((a) => a.enabled)
@@ -13,11 +21,12 @@ export function systemPrompt(agent, contractKey) {
     `Your teammates: ${team}. You only do your own job; your output is handed to the next agent automatically.`,
     `## How you think\n${agent.think}`,
     `## What you create\n${agent.create}`,
+    `## Project rules (apply to the whole team)\n${PROJECT_RULES}`,
     `## Output contract (must follow exactly)\n${CONTRACTS[contractKey]}`,
   ].join("\n\n");
 }
 
-export async function callProvider(agent, { system, user, maxTokens }) {
+export async function callProvider(agent, { system, user, messages, maxTokens }) {
   const { provider, model } = resolveAgentProvider(agent);
   const res = await fetch("/api/chat", {
     method: "POST",
@@ -26,7 +35,7 @@ export async function callProvider(agent, { system, user, maxTokens }) {
       provider,
       model,
       system,
-      messages: [{ role: "user", content: user }],
+      messages: messages || [{ role: "user", content: user }],
       maxTokens: maxTokens || state.settings.general.maxTokens,
       temperature: typeof agent.temperature === "number" ? agent.temperature : undefined,
       effort: agent.effort || undefined,
@@ -120,9 +129,14 @@ export function extractTag(text, tag) {
 }
 
 /** Parse a developer response (<thoughts>/<html>/<css>). */
+// {{ x }}, {% x %}, { x } or {x} placeholders left in user-facing content.
+export const PLACEHOLDER_RE = /\{%|%\}|\{\{|\}\}|\{\s*[a-z_][a-z0-9_.]*\s*(\|[^}]*)?\}/i;
+
 export function parseSection(text, id) {
   const html = extractTag(text, "html");
   if (!html) throw new Error("Response did not contain an <html> block");
+  const bad = html.replace(/<style[\s\S]*?<\/style>/gi, "").match(PLACEHOLDER_RE);
+  if (bad) throw new Error(`The HTML contains template/placeholder syntax ("${bad[0]}"). Write real, self-contained content instead — invent plausible details where needed.`);
   let clean = html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*')/gi, "");
   // Ensure the root element carries the section id so CSS scoping & navigation work.
   const root = clean.match(/^\s*<([a-z0-9-]+)([^>]*)>/i);

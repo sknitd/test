@@ -270,14 +270,16 @@ inline confirmation message. Guard every query against missing elements.
   qa: `Respond with ONLY a JSON object:
 {"thoughts":"...","summary":"one sentence",
  "issues":[{"sectionId":"id or 'global'","severity":"high|medium|low","issue":"what is wrong","fix":"precise instruction for a developer"}]}
-Only report real problems. Return at most 8 issues, most severe first.`,
+Only report real problems. Return at most 8 issues, most severe first.
+Review it as a static front-end prototype: forms, cart and checkout are demo-only by design. Never ask for backend, CMS, e-commerce platform or template-language integrations; invented sample details (address, hours, prices) are expected, not issues.`,
 
   evaluator: `Respond with ONLY a JSON object:
 {"thoughts":"...",
  "scores":{"promptFidelity":0-100,"visualDesign":0-100,"content":0-100,"accessibility":0-100,"responsiveness":0-100,"codeQuality":0-100},
  "verdict":"one or two sentences",
  "strengths":["..."],
- "improvements":[{"sectionId":"id","instruction":"precise instruction that would raise the score"}]}`,
+ "improvements":[{"sectionId":"id","instruction":"precise instruction that would raise the score"}]}
+Score it as a static front-end prototype: demo-only forms/cart/checkout and invented sample details are expected and must not lower the score. Never request backend, CMS, e-commerce platform or template-language integrations. Do penalize leftover placeholders or template syntax.`,
 
   custom_planning: `Respond with ONLY a JSON object:
 {"thoughts":"...","guidance":"concise guidance that will be shared with the designers, copywriter and developers"}`,

@@ -1,0 +1,178 @@
+{
+  "aiTemplates" : [
+
+  ],
+  "app" : "MagicForge",
+  "format" : "magicforge-profiles",
+  "profiles" : [
+    {
+      "bindings" : [
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 24,
+                "label" : "⌘+",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "20D2E503-29D2-8219-ABC7-8619E49DCC50",
+          "isEnabled" : true,
+          "note" : "Zoom in",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "pinchOut"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 27,
+                "label" : "⌘−",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "EEF17C5F-AA11-80F7-963D-D075D174F457",
+          "isEnabled" : true,
+          "note" : "Zoom out",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "pinchIn"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 15,
+                "label" : "⌥⌘R",
+                "option" : true,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "3993D075-A10A-8260-BDC0-0CD42B9E42E0",
+          "isEnabled" : true,
+          "note" : "Rotate clockwise",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "rotateClockwise"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 15,
+                "label" : "⌘R",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "80A0BE4E-B60E-80BB-9A3C-CF974CD67CB8",
+          "isEnabled" : true,
+          "note" : "Rotate counterclockwise",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "rotateCounterclockwise"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : false,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 123,
+                "label" : "←",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "A91594EB-ABDB-8433-AFD8-43B314213936",
+          "isEnabled" : true,
+          "note" : "Previous photo",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeLeft"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : false,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 124,
+                "label" : "→",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "40F3ACDF-90AC-86BC-A304-F77D5CA87534",
+          "isEnabled" : true,
+          "note" : "Next photo",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeRight"
+            }
+          }
+        }
+      ],
+      "bundleIdentifiers" : [
+        "com.apple.Photos"
+      ],
+      "id" : "38A76433-908A-82C6-B6D6-63FB92AA2346",
+      "inheritsGlobal" : true,
+      "isEnabled" : true,
+      "name" : "Photos",
+      "symbolName" : "photo.on.rectangle"
+    }
+  ],
+  "radialMenus" : [
+
+  ],
+  "version" : 1,
+  "workflows" : [
+
+  ]
+}

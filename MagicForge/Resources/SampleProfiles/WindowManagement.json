@@ -1,0 +1,196 @@
+{
+  "aiTemplates" : [
+
+  ],
+  "app" : "MagicForge",
+  "format" : "magicforge-profiles",
+  "profiles" : [
+    {
+      "bindings" : [
+        {
+          "action" : {
+            "window" : {
+              "_0" : {
+                "snapLeft" : {
+
+                }
+              }
+            }
+          },
+          "id" : "5BD3BA43-7244-8A6E-9AEB-686030A910A1",
+          "isEnabled" : true,
+          "note" : "",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeLeft"
+            }
+          }
+        },
+        {
+          "action" : {
+            "window" : {
+              "_0" : {
+                "snapRight" : {
+
+                }
+              }
+            }
+          },
+          "id" : "C22ADCC1-59B4-81AC-A009-301C95A39F6C",
+          "isEnabled" : true,
+          "note" : "",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeRight"
+            }
+          }
+        },
+        {
+          "action" : {
+            "window" : {
+              "_0" : {
+                "maximize" : {
+
+                }
+              }
+            }
+          },
+          "id" : "6E73BA6C-ADC8-8F9A-9334-22DF6402E7EA",
+          "isEnabled" : true,
+          "note" : "",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeUp"
+            }
+          }
+        },
+        {
+          "action" : {
+            "window" : {
+              "_0" : {
+                "restorePreviousFrame" : {
+
+                }
+              }
+            }
+          },
+          "id" : "CC5F0C25-9D08-8763-B99A-9FDA05A7E594",
+          "isEnabled" : true,
+          "note" : "",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeDown"
+            }
+          }
+        },
+        {
+          "action" : {
+            "window" : {
+              "_0" : {
+                "center" : {
+
+                }
+              }
+            }
+          },
+          "id" : "628755AB-CD16-8A50-89C6-B0905DBA5DEF",
+          "isEnabled" : true,
+          "note" : "",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "threeFingerTap"
+            }
+          }
+        },
+        {
+          "action" : {
+            "window" : {
+              "_0" : {
+                "resize" : {
+                  "byFraction" : 0.1
+                }
+              }
+            }
+          },
+          "id" : "4BF654C7-6FE4-89C3-987C-A83B9731B1EA",
+          "isEnabled" : true,
+          "note" : "Grow the window",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "pinchOut"
+            }
+          }
+        },
+        {
+          "action" : {
+            "window" : {
+              "_0" : {
+                "resize" : {
+                  "byFraction" : -0.1
+                }
+              }
+            }
+          },
+          "id" : "381B824D-8DBB-873E-9E90-EACA973A0BD9",
+          "isEnabled" : true,
+          "note" : "Shrink the window",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "pinchIn"
+            }
+          }
+        },
+        {
+          "action" : {
+            "window" : {
+              "_0" : {
+                "moveToNextDisplay" : {
+
+                }
+              }
+            }
+          },
+          "id" : "E40C5AD2-CC76-8F28-8CF9-DDD194BA0304",
+          "isEnabled" : true,
+          "note" : "",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "cornerTapTopRight"
+            }
+          }
+        }
+      ],
+      "bundleIdentifiers" : [
+
+      ],
+      "id" : "9E995DA8-F953-868F-8EAE-04241F2D6837",
+      "inheritsGlobal" : true,
+      "isEnabled" : true,
+      "name" : "Window Management",
+      "symbolName" : "macwindow.on.rectangle"
+    }
+  ],
+  "radialMenus" : [
+
+  ],
+  "version" : 1,
+  "workflows" : [
+
+  ]
+}

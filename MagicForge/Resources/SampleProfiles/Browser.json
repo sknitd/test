@@ -1,0 +1,290 @@
+{
+  "aiTemplates" : [
+
+  ],
+  "app" : "MagicForge",
+  "format" : "magicforge-profiles",
+  "profiles" : [
+    {
+      "bindings" : [
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 33,
+                "label" : "⌘[",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "39D4088C-7715-8B6A-9C45-CC3615C95540",
+          "isEnabled" : true,
+          "note" : "Back",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeLeft"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 30,
+                "label" : "⌘]",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "8C4A54A5-42C9-8F03-B969-F073AE31FE40",
+          "isEnabled" : true,
+          "note" : "Forward",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeRight"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 30,
+                "label" : "⇧⌘]",
+                "option" : false,
+                "shift" : true
+              }
+            }
+          },
+          "id" : "A21DAF2E-B9FD-8846-B001-AD544CA99E71",
+          "isEnabled" : true,
+          "note" : "Next tab",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "rotateClockwise"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 33,
+                "label" : "⇧⌘[",
+                "option" : false,
+                "shift" : true
+              }
+            }
+          },
+          "id" : "0F6226D6-5F29-878A-A47B-F120E59B11FD",
+          "isEnabled" : true,
+          "note" : "Previous tab",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "rotateCounterclockwise"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 17,
+                "label" : "⌘T",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "E3606D95-07CF-86D7-8F54-DEB6376E0407",
+          "isEnabled" : true,
+          "note" : "New tab",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "cornerTapTopRight"
+            }
+          }
+        }
+      ],
+      "bundleIdentifiers" : [
+        "com.apple.Safari"
+      ],
+      "id" : "F40DB07A-2B3D-890C-B5EE-3C8988BF1F51",
+      "inheritsGlobal" : true,
+      "isEnabled" : true,
+      "name" : "Safari",
+      "symbolName" : "safari"
+    },
+    {
+      "bindings" : [
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 33,
+                "label" : "⌘[",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "7D3E19DE-F2C1-830E-9D8E-9760577F734A",
+          "isEnabled" : true,
+          "note" : "Back",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeLeft"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 30,
+                "label" : "⌘]",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "E47E4795-899C-870F-B08A-3B3A7595673B",
+          "isEnabled" : true,
+          "note" : "Forward",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeRight"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 30,
+                "label" : "⇧⌘]",
+                "option" : false,
+                "shift" : true
+              }
+            }
+          },
+          "id" : "BA380EB8-5242-8519-B91A-3257FC2C567D",
+          "isEnabled" : true,
+          "note" : "Next tab",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "rotateClockwise"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 33,
+                "label" : "⇧⌘[",
+                "option" : false,
+                "shift" : true
+              }
+            }
+          },
+          "id" : "038F0C8C-3236-83CF-8A03-56E772A0E1C4",
+          "isEnabled" : true,
+          "note" : "Previous tab",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "rotateCounterclockwise"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 17,
+                "label" : "⌘T",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "4E2A21FB-508B-8ED1-8F84-411EE1C3B9FE",
+          "isEnabled" : true,
+          "note" : "New tab",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "cornerTapTopRight"
+            }
+          }
+        }
+      ],
+      "bundleIdentifiers" : [
+        "com.google.Chrome"
+      ],
+      "id" : "66BB8389-5C27-814F-9500-6FC1D874B377",
+      "inheritsGlobal" : true,
+      "isEnabled" : true,
+      "name" : "Google Chrome",
+      "symbolName" : "globe"
+    }
+  ],
+  "radialMenus" : [
+
+  ],
+  "version" : 1,
+  "workflows" : [
+
+  ]
+}

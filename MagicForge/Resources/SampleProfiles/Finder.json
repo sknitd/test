@@ -1,0 +1,178 @@
+{
+  "aiTemplates" : [
+
+  ],
+  "app" : "MagicForge",
+  "format" : "magicforge-profiles",
+  "profiles" : [
+    {
+      "bindings" : [
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 33,
+                "label" : "⌘[",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "C1841C73-08BE-8FC7-A835-0DEE82408265",
+          "isEnabled" : true,
+          "note" : "Back",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeLeft"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 30,
+                "label" : "⌘]",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "39E9F9CC-3524-8A9C-A31B-E52DD7507D97",
+          "isEnabled" : true,
+          "note" : "Forward",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeRight"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 126,
+                "label" : "⌘↑",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "D0CCEF55-EDF1-8C40-989B-F2DDA3DC70FF",
+          "isEnabled" : true,
+          "note" : "Enclosing folder",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeUp"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 37,
+                "label" : "⌥⌘L",
+                "option" : true,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "BDFFCFE8-ED42-8BC3-9678-1A667B0E421B",
+          "isEnabled" : true,
+          "note" : "Go to Downloads",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeDown"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : false,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 49,
+                "label" : "Space",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "A1BE18CE-2F08-8E69-A14F-5D496D32E58C",
+          "isEnabled" : true,
+          "note" : "Quick Look",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "threeFingerTap"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 45,
+                "label" : "⇧⌘N",
+                "option" : false,
+                "shift" : true
+              }
+            }
+          },
+          "id" : "58E1F624-AE7C-8573-BEF7-A53D675D2666",
+          "isEnabled" : true,
+          "note" : "New folder",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "cornerTapTopRight"
+            }
+          }
+        }
+      ],
+      "bundleIdentifiers" : [
+        "com.apple.finder"
+      ],
+      "id" : "478851B9-0573-8B00-8A82-304EA9D5287F",
+      "inheritsGlobal" : true,
+      "isEnabled" : true,
+      "name" : "Finder",
+      "symbolName" : "folder"
+    }
+  ],
+  "radialMenus" : [
+
+  ],
+  "version" : 1,
+  "workflows" : [
+
+  ]
+}

@@ -59,7 +59,9 @@ final class TwoFingerShapeTests: XCTestCase {
     func testVerySlowPinchEmitsNothing() {
         let paths = [SyntheticTouch.linePath(id: 1, from: Point(0.5, 0.72), to: Point(0.5, 0.62), duration: 3, easing: .linear),
                      SyntheticTouch.linePath(id: 2, from: Point(0.5, 0.28), to: Point(0.5, 0.38), duration: 3, easing: .linear)]
-        XCTAssertEqual(kinds(drive(makeEngine(), render(paths))), [])
+        // (With holds enabled this creep is slow enough to read as a two-finger hold.)
+        let shapes: [GestureKind] = [.pinchIn, .pinchOut, .rotateClockwise, .rotateCounterclockwise]
+        XCTAssertEqual(kinds(drive(makeEngine(enabled: shapes), render(paths))), [])
     }
 
     func testTwoFingerSwipeIsNotMistakenForPinchWhenFingersSpreadSlightly() {

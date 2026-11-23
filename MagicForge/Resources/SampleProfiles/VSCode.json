@@ -1,0 +1,178 @@
+{
+  "aiTemplates" : [
+
+  ],
+  "app" : "MagicForge",
+  "format" : "magicforge-profiles",
+  "profiles" : [
+    {
+      "bindings" : [
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 35,
+                "label" : "⇧⌘P",
+                "option" : false,
+                "shift" : true
+              }
+            }
+          },
+          "id" : "A9EC37D6-52FC-8914-BFF9-6495DE5F2B21",
+          "isEnabled" : true,
+          "note" : "Command Palette",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "threeFingerTap"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : false,
+                "control" : true,
+                "function" : false,
+                "keyCode" : 50,
+                "label" : "⌃`",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "15641018-23D4-80CF-8FD3-E31830AC64AB",
+          "isEnabled" : true,
+          "note" : "Toggle terminal",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "twoFingerSwipeDown"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 30,
+                "label" : "⇧⌘]",
+                "option" : false,
+                "shift" : true
+              }
+            }
+          },
+          "id" : "815656C7-9935-8CE5-BA4B-5E6F23A5AB9F",
+          "isEnabled" : true,
+          "note" : "Next editor",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "rotateClockwise"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : true,
+                "control" : false,
+                "function" : false,
+                "keyCode" : 33,
+                "label" : "⇧⌘[",
+                "option" : false,
+                "shift" : true
+              }
+            }
+          },
+          "id" : "A414B6B5-0E10-80AB-BE3D-169D6D8CF91F",
+          "isEnabled" : true,
+          "note" : "Previous editor",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "rotateCounterclockwise"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : false,
+                "control" : true,
+                "function" : false,
+                "keyCode" : 27,
+                "label" : "⌃−",
+                "option" : false,
+                "shift" : false
+              }
+            }
+          },
+          "id" : "CA9D19FE-DCB5-8660-8C97-9053445B724D",
+          "isEnabled" : true,
+          "note" : "Go back",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeLeft"
+            }
+          }
+        },
+        {
+          "action" : {
+            "keyboard" : {
+              "_0" : {
+                "command" : false,
+                "control" : true,
+                "function" : false,
+                "keyCode" : 27,
+                "label" : "⌃⇧−",
+                "option" : false,
+                "shift" : true
+              }
+            }
+          },
+          "id" : "183A7EAF-C5E2-8807-9827-38CE5E62B683",
+          "isEnabled" : true,
+          "note" : "Go forward",
+          "priority" : 0,
+          "sensitivity" : 0.5,
+          "trigger" : {
+            "single" : {
+              "_0" : "holdThenSwipeRight"
+            }
+          }
+        }
+      ],
+      "bundleIdentifiers" : [
+        "com.microsoft.VSCode"
+      ],
+      "id" : "07E52CEC-B953-87E3-A975-5D68D38146C7",
+      "inheritsGlobal" : true,
+      "isEnabled" : true,
+      "name" : "Visual Studio Code",
+      "symbolName" : "chevron.left.forwardslash.chevron.right"
+    }
+  ],
+  "radialMenus" : [
+
+  ],
+  "version" : 1,
+  "workflows" : [
+
+  ]
+}

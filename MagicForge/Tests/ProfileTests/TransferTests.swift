@@ -80,11 +80,16 @@ final class TransferTests: XCTestCase {
         XCTAssertTrue(preview.warnings.contains { $0.contains("both apply to com.example.app") })
 
         // Every identifier is new …
-        let oldIDs = Set([profile.id] + profile.bindings.map(\.id) + configuration.workflows.map(\.id)
-            + configuration.radialMenus.map(\.id)
-            + configuration.radialMenus.flatMap { ActionTraversal.allItems(in: $0.items).map(\.id) })
-        let newIDs = [imported.id] + imported.bindings.map(\.id) + preview.workflows.map(\.id)
-            + preview.radialMenus.map(\.id) + ActionTraversal.allItems(in: preview.radialMenus[0].items).map(\.id)
+        var oldIDs: Set<UUID> = [profile.id]
+        oldIDs.formUnion(profile.bindings.map(\.id))
+        oldIDs.formUnion(configuration.workflows.map(\.id))
+        oldIDs.formUnion(configuration.radialMenus.map(\.id))
+        oldIDs.formUnion(configuration.radialMenus.flatMap { ActionTraversal.allItems(in: $0.items).map(\.id) })
+        var newIDs: [UUID] = [imported.id]
+        newIDs += imported.bindings.map(\.id)
+        newIDs += preview.workflows.map(\.id)
+        newIDs += preview.radialMenus.map(\.id)
+        newIDs += ActionTraversal.allItems(in: preview.radialMenus[0].items).map(\.id)
         XCTAssertTrue(oldIDs.isDisjoint(with: newIDs))
         XCTAssertEqual(Set(newIDs).count, newIDs.count)
 

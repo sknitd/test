@@ -93,9 +93,13 @@ final class DefaultsTests: XCTestCase {
     }
 
     func testEveryIdentifierIsUnique() {
-        let ids = configuration.profiles.map(\.id) + configuration.profiles.flatMap { $0.bindings.map(\.id) }
-            + configuration.workflows.map(\.id) + configuration.radialMenus.map(\.id) + configuration.ai.templates.map(\.id)
-            + DefaultProfiles.windowManagement().bindings.map(\.id) + [DefaultProfiles.windowManagement().id]
+        let windows = DefaultProfiles.windowManagement()
+        var ids: [UUID] = configuration.profiles.map(\.id)
+        for profile in configuration.profiles + [windows] { ids += profile.bindings.map(\.id) }
+        ids += configuration.workflows.map(\.id)
+        ids += configuration.radialMenus.map(\.id)
+        ids += configuration.ai.templates.map(\.id)
+        ids.append(windows.id)
         XCTAssertEqual(Set(ids).count, ids.count)
     }
 }

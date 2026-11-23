@@ -111,7 +111,6 @@ public struct KeyComboRecorder: View {
         HStack(spacing: 6) {
             Button(action: { toggleRecording() }) {
                 Text(buttonTitle)
-                    .font(session.isRecording ? .body : .system(.body, design: .rounded))
                     .frame(minWidth: 120)
             }
             .accessibilityLabel(Text(accessibilityTitle))

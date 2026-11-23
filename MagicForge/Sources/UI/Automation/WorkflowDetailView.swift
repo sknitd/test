@@ -177,11 +177,15 @@ struct WorkflowRunCard: View {
 struct WorkflowRunningRow: View {
     let run: RunningWorkflow
 
+    private var progressText: String {
+        run.progress.isEmpty ? "Running…" : "Running step " + run.progress
+    }
+
     var body: some View {
         HStack(spacing: 8) {
             ProgressView()
                 .controlSize(.small)
-            Text(run.progress.isEmpty ? "Running…" : "Running step \(run.progress)")
+            Text(progressText)
                 .font(.callout)
             Text("started \(DateFormatter.localizedString(from: run.startedAt, dateStyle: .none, timeStyle: .medium))")
                 .font(.caption)

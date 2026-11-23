@@ -159,8 +159,7 @@ struct AIConnectionCard: View {
             ProgressView()
                 .controlSize(.small)
         case .succeeded(let reply):
-            Label(reply.isEmpty ? "Connection works." : "Connection works. Reply: \(ActionText.firstLine(reply, limit: 80))",
-                  systemImage: "checkmark.circle.fill")
+            Label(Self.successText(reply), systemImage: "checkmark.circle.fill")
                 .font(.callout)
                 .foregroundStyle(Color.green)
                 .fixedSize(horizontal: false, vertical: true)
@@ -171,6 +170,11 @@ struct AIConnectionCard: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .textSelection(.enabled)
         }
+    }
+
+    private static func successText(_ reply: String) -> String {
+        if reply.isEmpty { return "Connection works." }
+        return "Connection works. Reply: " + ActionText.firstLine(reply, limit: 80)
     }
 
     private func runTest() {

@@ -32,7 +32,7 @@ enum Fixtures {
 }
 
 extension XCTestCase {
-    func assertThrowsConfigurationError(_ expression: @autoclosure () throws -> Any, file: StaticString = #filePath,
+    func assertThrowsConfigurationError<T>(_ expression: @autoclosure () throws -> T, file: StaticString = #filePath,
                                         line: UInt = #line, _ check: (ConfigurationError) -> Void = { _ in }) {
         do {
             _ = try expression()

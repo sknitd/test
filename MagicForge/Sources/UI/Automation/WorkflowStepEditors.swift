@@ -220,7 +220,7 @@ struct WorkflowConditionEditor: View {
             if current.kind.usesBundleID {
                 ActionAppPicker(title: "App", bundleID: value)
             } else {
-                TextField("Text", text: value, prompt: Text("Text to look for (case-sensitive)"))
+                TextField("Text", text: value, prompt: Text("Text to look for"))
                     .textFieldStyle(.roundedBorder)
                 Text("The clipboard is read only at the moment this step runs.")
                     .font(.caption)

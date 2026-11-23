@@ -86,7 +86,7 @@ enum GestureUI {
     // MARK: Availability
 
     /// nil when every gesture of the trigger can be delivered, else the first reason.
-    static func unavailableReason(for trigger: GestureTrigger, model: AppModel) -> String? {
+    @MainActor static func unavailableReason(for trigger: GestureTrigger, model: AppModel) -> String? {
         for kind in trigger.kinds {
             if case .unavailable(let reason) = model.availability(of: kind) { return reason }
         }

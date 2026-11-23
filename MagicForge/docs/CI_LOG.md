@@ -78,3 +78,46 @@ Sources/Engine/** and Tests/EngineTests/**):
   `AppModel.isPaused`) and on app termination. Behaviour change: a held drag lock is now released
   on pause/quit instead of staying down.
 - Linux here (Swift 6.0.3) after these changes: `swift test` 362 tests, 0 failures.
+
+## Run #4 — id 45177608947 — commit fed7c5c — conclusion: all jobs success
+https://github.com/sknitd/test/actions/runs/45177608947
+
+First run with the finished engine (Sources/Engine/**, Tests/EngineTests/**) and the changes
+listed under run #3. (Run #3 itself ended as "cancelled", as expected.)
+
+| job | toolchain | swift build | swift test | mfprobe --self-check | xcodebuild | build_app.sh | make_dmg.sh | universal SwiftPM | launch smoke |
+|---|---|---|---|---|---|---|---|---|---|
+| macOS (macos-15) | Xcode 16.4, Swift 6.1.2 | success | success, 362 tests, 0 failures | success | success | success | success | success (`x86_64 arm64`) | success |
+| macOS (macos-15-xcode16.0) | Xcode 16.0, Swift 6.0 | success | success, 362 tests, 0 failures | success | success | success | success | not run (matrix) | success |
+| macOS (macos-26) | Xcode 26.6, Swift 6.3.3 | success | success, 362 tests, 0 failures | success | success | success | success | not run (matrix) | success |
+| Linux portable modules (swift:6.0-noble) | Swift 6.0 | success | success | – | – | – | – | – | – |
+| Linux portable modules (swift:5.10-noble) | Swift 5.10 (informational) | success | success | – | – | – | – | – | – |
+| Project, scripts and resources | – | all steps success | | | | | | | |
+
+Compile errors: none. Compiler warnings in the `swift build` logs: none on any of the three toolchains.
+xcodebuild: `** BUILD SUCCEEDED **` on all three. DMGs 3.4 MB each, `hdiutil verify` VALID.
+
+mfprobe --self-check: the JSON of each runner is byte-identical to the one recorded from run #2
+(docs/FEASIBILITY.md, "CI probe results").
+
+Launch smoke test, now with the real engine started: alive after 10 s and after 20 s of sampling on
+all three runners, empty stderr, no crash report. The app's own unified-log lines on each runner:
+`[com.magicforge.app:devices] Device monitor started, 0 Magic Mouse device(s) present` and
+`[com.magicforge.app:eventtap] Event tap started`.
+
+| job | ps CPU % avg / max | ps RSS MB avg (min–max) | top CPU % avg / max | top idle wake-ups per sample avg / max |
+|---|---|---|---|---|
+| macos-15 | 0.29 / 4.40 | 91.9 (90.5–92.8) | 0.23 / 2.90 | 0.0 / 0 |
+| macos-15-xcode16.0 | 0.17 / 1.10 | 91.3 (90.0–92.1) | 0.31 / 3.60 | 185.6 / 189 |
+| macos-26 | 0.37 / 4.10 | 114.4 (112.6–115.4) | 0.23 / 1.90 | 193.4 / 195 |
+
+(The wake-up column is again inconsistent between jobs; see run #2.) These are numbers from a
+virtualised runner with no Magic Mouse and with the event tap installed; they say nothing about
+CPU use while touch frames arrive.
+
+Artifacts: `MagicForge-dmg-<id>`, `MagicForge-app-<id>`, `probe-<id>`, `logs-<id>` for
+`<id>` in macos-15, macos-15-xcode16.0, macos-26; `linux-logs-0`, `linux-logs-1`.
+
+Not exercised by any run: real touch input, macOS 14, Intel hardware, missing TCC permissions
+(the runner shell has Accessibility / event access granted), and any interactive UI path beyond
+launching the main window.

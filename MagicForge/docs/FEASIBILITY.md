@@ -217,6 +217,7 @@ without prompting; MagicForge never prompts implicitly.
 
 Source: GitHub Actions run 45174444697 (commit 1a01839), step "mfprobe --self-check"
 (`swift run mfprobe --self-check`), hosted runners, **no Magic Mouse attached**. See docs/CI_LOG.md.
+Run 45177608947 (commit fed7c5c, with the finished engine) printed byte-identical JSON on all three runners.
 
 What these runs establish (software questions only):
 - MFDevices, MFInput and mfprobe compile against the real macOS SDK with Xcode 16.0 (Swift 6.0),

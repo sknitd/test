@@ -58,6 +58,12 @@ final class InputTests: XCTestCase {
         await harness.settle()
         XCTAssertEqual(harness.performer.performed, [TestConfig.keyC])
         XCTAssertEqual(harness.model.recentGestures.map(\.event.kind), [.chordRightClick, .chordLeftClick])
+
+        // Paused: the chord is reported but its click is left alone, because nothing runs instead.
+        harness.model.setPaused(true)
+        XCTAssertFalse(handlers.onChord(.chordLeftClick, MonotonicClock.now()))
+        await harness.wait("paused chord record") { harness.model.recentGestures.count == 3 }
+        XCTAssertEqual(harness.performer.performed.count, 1)
         harness.model.stop()
     }
 
@@ -215,6 +221,23 @@ final class InputTests: XCTestCase {
         harness.perform(.twoFingerTap)
         await harness.wait("action") { harness.performer.performed.count == 1 }
         harness.model.stop()
+    }
+
+    @MainActor func testModelIsReleasedAfterStop() async {
+        weak var released: AppModel?
+        let adapter = MockAdapter()
+        do {
+            let harness = Harness(adapter: adapter)
+            harness.model.start()
+            harness.perform(.twoFingerTap)
+            await harness.wait("action") { harness.performer.performed.count == 1 }
+            harness.model.update { $0.settings.animationsEnabled = false }
+            harness.model.stop()
+            released = harness.model
+        }
+        for _ in 0..<100 where released != nil { try? await Task.sleep(nanoseconds: 10_000_000) }
+        XCTAssertNil(released, "no retain cycle keeps the model alive")
+        XCTAssertFalse(adapter.isStarted)
     }
 
     @MainActor func testScrollPassesThroughByDefaultAndRewritesWhenEnabled() async {

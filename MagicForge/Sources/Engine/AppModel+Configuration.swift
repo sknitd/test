@@ -175,7 +175,8 @@ extension AppModel {
         let calibration = connectedDevice.flatMap { configuration.calibrations[$0.id] } ?? DeviceCalibration()
         pipeline.apply(PipelineSettings(profile: resolved,
                                         recognizer: resolved.recognizerConfig(base: configuration.recognizer),
-                                        calibration: calibration, recognizerKinds: recognizerKinds))
+                                        calibration: calibration, recognizerKinds: recognizerKinds,
+                                        actionsAreLive: !isPaused && !suppressActions))
         if let source = services.pointerEvents {
             source.setEnabledChords(chordKinds)
             source.setScrollInterceptionEnabled(resolved.scroll.isEnabled)

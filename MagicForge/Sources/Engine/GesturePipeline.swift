@@ -35,6 +35,9 @@ struct PipelineSettings: Sendable {
     var calibration: DeviceCalibration
     /// Raw-contact kinds the recognizer may emit.
     var recognizerKinds: Set<GestureKind>
+    /// False while gestures are paused or actions are suppressed: chords are still reported,
+    /// but their click / scroll is not swallowed because nothing will run in its place.
+    var actionsAreLive: Bool
 }
 
 /// Input side of the engine: frames → `GestureEngine` → `SequenceMatcher` → binding lookup.
@@ -58,6 +61,7 @@ final class GesturePipeline: @unchecked Sendable {
     /// State read on the event-tap thread.
     private struct TapState {
         var chordKinds: Set<GestureKind> = []
+        var actionsAreLive = true
         var scroll = ScrollSettings()
         var transformer = ScrollTransformer()
     }
@@ -110,6 +114,7 @@ final class GesturePipeline: @unchecked Sendable {
     func apply(_ settings: PipelineSettings) {
         tap.withLock { state in
             state.chordKinds = settings.profile.chordKinds
+            state.actionsAreLive = settings.actionsAreLive
             if state.scroll != settings.profile.scroll {
                 state.scroll = settings.profile.scroll
                 state.transformer.reset()
@@ -179,7 +184,7 @@ final class GesturePipeline: @unchecked Sendable {
             },
             onChord: { [weak self] kind, timestamp in
                 guard let self, kind.category == .fallback else { return false }
-                let isBound = self.tap.withLock { $0.chordKinds.contains(kind) }
+                let isBound = self.tap.withLock { $0.actionsAreLive && $0.chordKinds.contains(kind) }
                 self.queue.async { [weak self] in
                     guard let self else { return }
                     let event = GestureEvent(kind: kind, timestamp: timestamp, confidence: 1, fingerCount: 0)

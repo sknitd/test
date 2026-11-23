@@ -38,8 +38,11 @@ for module in portable where only == nil || only == module.name {
     let deps: [Target.Dependency] = ["MFCore", "MFUtilities"] + module.deps.map { Target.Dependency(stringLiteral: $0) }
     targets.append(.target(name: module.name, dependencies: deps, path: module.path))
     if let tests = module.tests {
-        targets.append(.testTarget(name: tests, dependencies: [Target.Dependency(stringLiteral: module.name), "MFCore"],
-                                   path: "Tests/\(tests)"))
+        // Test targets import MFUtilities directly, and EngineTests also imports the engine's
+        // own dependencies; every imported module is declared explicitly.
+        let testDeps: [Target.Dependency] = [Target.Dependency(stringLiteral: module.name), "MFCore", "MFUtilities"]
+            + module.deps.map { Target.Dependency(stringLiteral: $0) }
+        targets.append(.testTarget(name: tests, dependencies: testDeps, path: "Tests/\(tests)"))
     }
 }
 if only == "MFEngine" {

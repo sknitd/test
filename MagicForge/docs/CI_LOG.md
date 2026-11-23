@@ -56,3 +56,25 @@ Linux: `linux-logs-0`, `linux-logs-1`.
 Changes made after this run:
 - `Sources/UI/Actions/ActionEditor.swift`: removed the unreachable `default:` branch of the
   exhaustive `ActionCategory` switch (the only compiler warning). No behaviour change.
+
+## Run #3 — id 45176093182 — commit cdb7a6d — superseded before completion
+https://github.com/sknitd/test/actions/runs/45176093182
+
+Same tree as run #2 plus the finished Sources/UI/{Actions,Automation,RadialMenu,AI} edits and the
+warning fix; Sources/Engine still the contract-only `AppModel.swift`.
+- macOS (macos-15) and macOS (macos-26): every step success (swift build, swift test, mfprobe,
+  xcodebuild, build_app.sh, make_dmg.sh, smoke; universal SwiftPM build success on macos-15).
+- macOS (macos-15-xcode16.0): started late (runner queue); swift build, swift test and mfprobe
+  success, xcodebuild still running when run #4 was pushed (job cancelled by the concurrency group).
+- Linux (6.0, 5.10) and project lint: success.
+
+Changes made after this run (pushed as run #4, together with the finished engine,
+Sources/Engine/** and Tests/EngineTests/**):
+- `Package.swift`: test targets now declare every module they import (MFUtilities for all;
+  MFGestures, MFProfiles, MFAutomation, MFIntegrations for EngineTests). They previously built
+  only because SwiftPM exposes transitive modules.
+- `Sources/App/CompositionRoot.swift`: the composition root keeps the `SystemActionPerformer` and
+  calls `releaseHeldInput()` when gestures become paused (Observation tracking of
+  `AppModel.isPaused`) and on app termination. Behaviour change: a held drag lock is now released
+  on pause/quit instead of staying down.
+- Linux here (Swift 6.0.3) after these changes: `swift test` 362 tests, 0 failures.

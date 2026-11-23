@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Observation
 import MFCore
 import MFUtilities
 import MFEngine
@@ -37,6 +38,10 @@ final class CompositionRoot {
     private let radialMenuController: RadialMenuController
     private let aiInteractionController: AIInteractionController
     private let dashboardOpener: DashboardOpener
+    /// Kept to release a held drag lock when gestures are paused or the app quits
+    /// (`ActionPerforming` has no hook for that, so the engine cannot do it).
+    private let performer: SystemActionPerformer
+    private var wasPaused: Bool = false
 
     private let log = Log("app")
 
@@ -112,6 +117,7 @@ final class CompositionRoot {
         self.radialMenuController = radialMenuController
         self.aiInteractionController = aiInteractionController
         self.dashboardOpener = dashboardOpener
+        self.performer = performer
 
         dashboardOpener.handler = { [weak self] in
             self?.showMainWindow()
@@ -133,6 +139,8 @@ final class CompositionRoot {
         // call `applyLaunchVisibilityIfReady()` when loading completes instead.
         model.start()
         hasStarted = true
+        wasPaused = model.isPaused
+        observePauseState()
         applyLaunchVisibilityIfReady()
         // The launch window normally attaches before or right after this callback. Stop waiting
         // after a moment so a window the user opens later is never closed by mistake.
@@ -145,6 +153,27 @@ final class CompositionRoot {
     func applicationWillTerminate() {
         model.saveNow()
         model.stop()
+        performer.releaseHeldInput()
+    }
+
+    /// Releases a held drag lock the moment gestures become paused, so a paused MagicForge never
+    /// leaves the left mouse button logically down. Observation fires once per registration, so
+    /// the tracking re-arms itself after every change.
+    private func observePauseState() {
+        withObservationTracking {
+            _ = model.isPaused
+        } onChange: { [weak self] in
+            // `onChange` runs before the new value is stored; read it on the next main-actor turn.
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let paused: Bool = self.model.isPaused
+                if paused && !self.wasPaused {
+                    self.performer.releaseHeldInput()
+                }
+                self.wasPaused = paused
+                self.observePauseState()
+            }
+        }
     }
 
     func applicationDidBecomeActive() {

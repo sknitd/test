@@ -197,8 +197,9 @@ history is recorded in the background.
 
 ## Limitations
 
-- `ActionPerforming` has no hook for releasing a held drag, so pausing gestures does not call
-  `SystemActionPerformer.releaseHeldInput()`.
+- `ActionPerforming` has no hook for releasing a held drag, so the engine itself does not call
+  `SystemActionPerformer.releaseHeldInput()`. The app's composition root (`Sources/App`) does it
+  instead: when `isPaused` turns true and when the app terminates.
 - Starting a workflow, opening a radial menu and cancelling workflows from synchronous API
   (`showRadialMenu`, `cancelAllWorkflows`) take effect on the next main-actor turn.
 - macOS behaviour of the real adapter, event tap and performer is not exercised here; the

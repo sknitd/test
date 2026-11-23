@@ -6,3 +6,5 @@ DerivedData/
 build/
 dist/
 .DS_Store
+dist-*/
+ci-artifacts/

@@ -61,16 +61,17 @@ final class CompositionRoot {
         // touch adapter. If MFInput gains a public-API fallback adapter, append it here.
         let multitouchAdapter = MultitouchSupportAdapter()
         let pointerSource = EventTapPointerSource()
-        // WIRING: MFInput exposes an activity hook used by the scroll-origin heuristic (the event
-        // tap asks "was the Magic Mouse surface touched just now?"). Connect the adapter's hook
-        // to the pointer source here, e.g. `pointerSource.<activityProvider> = { multitouchAdapter.<lastActivity> }`.
-        // Nothing is connected yet because the hook's name was not part of the contract.
+        // WIRING: scroll-origin heuristic. The adapter records when a finger was last on the Magic
+        // Mouse (`MultitouchSupportAdapter.activity`); the event tap asks through
+        // `EventTapPointerSource.magicMouseActivityProbe` (called on the tap thread). Without the
+        // probe, `assumeContinuousScrollIsMagicMouse` (default false) decides instead.
+        pointerSource.magicMouseActivityProbe = CompositionRoot.makeActivityProbe(multitouchAdapter.activity)
         let deviceMonitor = HIDDeviceMonitor()
 
         // --- System services -----------------------------------------------------------
         let permissions = SystemPermissions()
-        // WIRING: SystemActionPerformer(permissions:) is pinned; if it needs more collaborators
-        // (text access, notifier) pass them here.
+        // WIRING: SystemActionPerformer also offers init(permissions:scriptTimeout:) if the
+        // default script timeout needs changing.
         let performer = SystemActionPerformer(permissions: permissions)
         let frontmostApp = WorkspaceAppProvider()
         let textAccess = PasteboardTextAccess()
@@ -80,8 +81,9 @@ final class CompositionRoot {
         let aiClient = OpenAICompatibleClient()
 
         // --- UI-backed presenters --------------------------------------------------------
-        // WIRING: both controllers are pinned as `public init()`. If either needs the model or
-        // the animation setting, inject it after `AppModel` is created below.
+        // WIRING: both controllers are pinned as `public init()` in the brief; their sources were
+        // not on disk when this file was written. If either needs the model or the animation
+        // setting, inject it after `AppModel` is created below.
         let radialMenuController = RadialMenuController()
         let aiInteractionController = AIInteractionController()
 
@@ -114,6 +116,11 @@ final class CompositionRoot {
         dashboardOpener.handler = { [weak self] in
             self?.showMainWindow()
         }
+    }
+
+    /// Built outside the main actor's isolation on purpose: the probe runs on the event tap thread.
+    nonisolated private static func makeActivityProbe(_ activity: MagicMouseActivity) -> () -> Bool {
+        return { activity.isActive() }
     }
 
     // MARK: Lifecycle (called by the app delegate)

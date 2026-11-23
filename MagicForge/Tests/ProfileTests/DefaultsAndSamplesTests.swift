@@ -124,7 +124,11 @@ final class SampleProfileTests: XCTestCase {
         }
         for sample in samples {
             let onDisk = try Data(contentsOf: samplesDirectory.appendingPathComponent(sample.fileName))
-            XCTAssertEqual(onDisk, sample.data, "\(sample.fileName) is stale; run the tests with MF_WRITE_SAMPLES=1")
+            // Compared as JSON values: whitespace details of the encoder differ between platforms.
+            let stored = try JSONSerialization.jsonObject(with: onDisk) as? NSDictionary
+            let expected = try JSONSerialization.jsonObject(with: sample.data) as? NSDictionary
+            XCTAssertNotNil(stored)
+            XCTAssertEqual(stored, expected, "\(sample.fileName) is stale; run the tests with MF_WRITE_SAMPLES=1")
         }
     }
 

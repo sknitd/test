@@ -209,8 +209,8 @@ final class ValidatorTests: XCTestCase {
         func chain(_ depth: Int) -> RadialMenuItem {
             RadialMenuItem(title: "level \(depth)", children: depth > 1 ? [chain(depth - 1)] : [])
         }
-        let wide = (0..<20).map { RadialMenuItem(title: "item \($0)") }
-        var menu = RadialMenu(name: "Big", items: [chain(6), RadialMenuItem(title: "wide", children: wide)] + wide)
+        func wide() -> [RadialMenuItem] { (0..<20).map { RadialMenuItem(title: "item \($0)") } }
+        var menu = RadialMenu(name: "Big", items: [chain(6), RadialMenuItem(title: "wide", children: wide())] + wide())
         menu.theme.diameter = 5
         menu.theme.accentHex = "red"
         var configuration = Fixtures.configuration()

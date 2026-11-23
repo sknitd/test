@@ -34,6 +34,15 @@ final class SwipeTests: XCTestCase {
         XCTAssertLessThan(events[0].duration, 0.2)
     }
 
+    func testQuickFlickShorterThanTheLandingWindowIsRecognized() {
+        // 26 mm in 66 ms (about 400 mm/s): over before the 90 ms landing window closes.
+        let flick = SyntheticTouch.linePath(from: Point(0.75, 0.5), to: Point(0.25, 0.5), duration: 0.066)
+        XCTAssertEqual(kinds(drive(makeEngine(), render([flick]))), [.oneFingerSwipeLeft])
+        let pair = [SyntheticTouch.linePath(id: 1, from: Point(0.38, 0.3), to: Point(0.38, 0.7), duration: 0.066),
+                    SyntheticTouch.linePath(id: 2, from: Point(0.62, 0.3), to: Point(0.62, 0.7), duration: 0.066)]
+        XCTAssertEqual(kinds(drive(makeEngine(), render(pair, endStyle: .disappear))), [.twoFingerSwipeUp])
+    }
+
     func testEdgeSwipesTakePrecedenceAndFallBackWhenDisabled() {
         let cases: [(GestureKind, GestureKind)] = [(.leftEdgeSwipe, .oneFingerSwipeUp), (.rightEdgeSwipe, .oneFingerSwipeDown),
                                                    (.topEdgeSwipe, .oneFingerSwipeRight),

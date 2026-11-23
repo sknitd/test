@@ -14,10 +14,12 @@ extension GestureEngine {
         var meanPath = 0.0
     }
 
-    func evaluateEpisode(now: TimeInterval, out: inout [GestureEvent]) {
+    /// `fingerCountIsFinal` is passed when a member is about to lift: no further finger can
+    /// join, so a quick flick that ends inside the landing window is still evaluated.
+    func evaluateEpisode(now: TimeInterval, fingerCountIsFinal: Bool = false, out: inout [GestureEvent]) {
         guard episode.phase == .tracking || episode.phase == .held, episode.touching > 0 else { return }
         // Until the landing window closes the finger count is not known.
-        guard now >= episode.startTime + config.multiFingerLandingWindow else { return }
+        guard fingerCountIsFinal || now >= episode.startTime + config.multiFingerLandingWindow else { return }
         let fingers = episode.peakCount
         if fingers > EngineConstants.maxFingers { cancelEpisode("tooManyFingers"); return }
         // After a finger left, only the tap evaluation at the end remains.

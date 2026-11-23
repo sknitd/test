@@ -134,6 +134,11 @@ extension GestureEngine {
     }
 
     private func lift(at index: Int, now: TimeInterval, out: inout [GestureEvent]) {
+        if tracks[index].isMember && !tracks[index].endedCancelled && episode.phase == .tracking
+            && !episode.liftedAny && now < episode.startTime + config.multiFingerLandingWindow {
+            // A flick quicker than the landing window: judge it now, from the last positions.
+            evaluateEpisode(now: now, fingerCountIsFinal: true, out: &out)
+        }
         let track = tracks.remove(at: index)
         guard track.isMember else { return }
         episode.touching -= 1

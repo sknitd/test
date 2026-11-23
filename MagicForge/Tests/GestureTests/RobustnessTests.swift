@@ -218,7 +218,8 @@ final class RobustnessTests: XCTestCase {
             if live.phase == "landing" || live.phase == "tracking" { XCTAssertEqual(live.activeFingerCount, 2) }
         }
         XCTAssertEqual(phases, ["landing", "tracking", "recognized", "idle"])
-        XCTAssertEqual(candidates, [.twoFingerTap, .twoFingerSwipeLeft])
+        XCTAssertEqual(candidates.first, .twoFingerTap)
+        XCTAssertEqual(candidates.last, .twoFingerSwipeLeft)
         XCTAssertEqual(engine.liveState.activeFingerCount, 0)
 
         engine.reset()

@@ -137,7 +137,8 @@ public enum SyntheticTouch {
         frames.filter { $0.timestamp < from || $0.timestamp >= to }
     }
 
-    /// Shifts ids so that streams built separately can be concatenated without id reuse issues.
+    /// Joins separately rendered streams into one, ordered by timestamp. The streams must not
+    /// overlap in time (overlapping contacts belong in one `render` call).
     public static func concatenate(_ streams: [[TouchFrame]]) -> [TouchFrame] {
         streams.flatMap { $0 }.sorted { $0.timestamp < $1.timestamp }
     }

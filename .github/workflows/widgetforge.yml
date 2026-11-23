@@ -12,10 +12,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  core-tests:
-    name: Core unit tests (swift test)
-    runs-on: macos-14
+  core-linux:
+    name: Core tests (Linux, Swift 5.10)
+    runs-on: ubuntu-24.04
+    container: swift:5.10-noble
     timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: WidgetForge
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        shell: bash
+        run: |
+          set -o pipefail
+          swift build --build-tests 2>&1 | tee build.log | grep -E "error:|Build complete" | sort -u | head -n 120
+      - name: Test
+        shell: bash
+        run: |
+          set -o pipefail
+          swift test 2>&1 | grep -vE "^Test Case .* (started|passed)" | tail -n 200
+
+  core-macos:
+    name: Core tests (macOS)
+    runs-on: macos-15
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: WidgetForge
@@ -26,9 +47,13 @@ jobs:
           sw_vers
           xcodebuild -version
           swift --version
-      - name: Build and test WidgetForgeKit
+      - name: Build
         shell: bash
         run: |
           set -o pipefail
-          swift build --build-tests 2>&1 | grep -E "error|warning: unre|Compiling|Build complete" | grep -v "^\[" | head -n 150 || true
-          swift test 2>&1 | tail -n 250
+          swift build --build-tests 2>&1 | tee build.log | grep -E "error:|Build complete" | sort -u | head -n 120
+      - name: Test
+        shell: bash
+        run: |
+          set -o pipefail
+          swift test 2>&1 | grep -vE "^Test Case .* (started|passed)" | tail -n 200

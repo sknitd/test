@@ -213,6 +213,247 @@ without prompting; MagicForge never prompts implicitly.
 
 <!-- CI probe results are appended below by the lead. -->
 
+### CI probe results
+
+Source: GitHub Actions run 45174444697 (commit 1a01839), step "mfprobe --self-check"
+(`swift run mfprobe --self-check`), hosted runners, **no Magic Mouse attached**. See docs/CI_LOG.md.
+
+What these runs establish (software questions only):
+- MFDevices, MFInput and mfprobe compile against the real macOS SDK with Xcode 16.0 (Swift 6.0),
+  Xcode 16.4 (Swift 6.1.2) and Xcode 26.6 (Swift 6.3.3), without errors.
+- On macOS 15.8.2 and macOS 26.7.2 (arm64) `MultitouchSupport.framework` loads with `dlopen` and
+  all 5 required and all 7 optional symbols resolve with `dlsym`.
+- `MTDeviceCreateList` can be called on a machine with no multitouch device and returns 0 devices
+  without crashing; the adapter reports "unavailable: No Magic Mouse multitouch device is connected".
+- The Swift touch struct has stride 96 on macOS arm64 (matches the expected 96).
+- Unopened IOHIDManager enumeration runs and returns 0 Magic Mouse devices.
+- Listen-only and active CGEvent taps can be created when permissions are granted.
+
+What they do NOT establish:
+- Anything about real contact frames (run-time callback signature, rate, orientation, family ids,
+  sensor dimensions): no device was present, so no callback ever fired.
+- Behaviour on macOS 14 (no runner exists) or on Intel hardware (all runners are arm64).
+- Behaviour without TCC permissions: the hosted runners report Accessibility trusted, listen-event
+  and post-event access all `true` for the runner shell, so the "permission missing" paths were
+  not exercised by these runs.
+
+Verbatim JSON, job "macOS (macos-15)" (Xcode 16.4). The job "macOS (macos-15-xcode16.0)" (Xcode 16.0,
+same OS image) printed byte-identical JSON.
+
+```json
+{
+  "eventTap" : {
+    "activeCreated" : true,
+    "attempted" : true,
+    "listenOnlyCreated" : true
+  },
+  "hid" : {
+    "devices" : [
+
+    ],
+    "magicMouseCount" : 0
+  },
+  "mode" : "self-check",
+  "multitouchSupport" : {
+    "adapterAvailability" : "unavailable: No Magic Mouse multitouch device is connected",
+    "deviceCount" : 0,
+    "devices" : [
+
+    ],
+    "expectedTouchStride" : 96,
+    "frameworkPath" : "\/System\/Library\/PrivateFrameworks\/MultitouchSupport.framework\/MultitouchSupport",
+    "layoutProblem" : "",
+    "loaded" : true,
+    "loadError" : "",
+    "symbols" : [
+      {
+        "name" : "MTDeviceCreateList",
+        "required" : true,
+        "resolved" : true
+      },
+      {
+        "name" : "MTRegisterContactFrameCallback",
+        "required" : true,
+        "resolved" : true
+      },
+      {
+        "name" : "MTUnregisterContactFrameCallback",
+        "required" : true,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceStart",
+        "required" : true,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceStop",
+        "required" : true,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceCreateDefault",
+        "required" : false,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceRelease",
+        "required" : false,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceIsRunning",
+        "required" : false,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceIsBuiltIn",
+        "required" : false,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceGetFamilyID",
+        "required" : false,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceGetDeviceID",
+        "required" : false,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceGetSensorSurfaceDimensions",
+        "required" : false,
+        "resolved" : true
+      }
+    ],
+    "touchStride" : 96,
+    "unavailableReason" : ""
+  },
+  "os" : {
+    "architecture" : "arm64",
+    "major" : 15,
+    "minor" : 8,
+    "patch" : 2,
+    "versionString" : "Version 15.8.2 (Build 24H232)"
+  },
+  "permissions" : {
+    "accessibilityTrusted" : true,
+    "listenEventAccess" : true,
+    "postEventAccess" : true
+  },
+  "tool" : "mfprobe"
+}
+```
+
+Verbatim JSON, job "macOS (macos-26)" (Xcode 26.6):
+
+```json
+{
+  "eventTap" : {
+    "activeCreated" : true,
+    "attempted" : true,
+    "listenOnlyCreated" : true
+  },
+  "hid" : {
+    "devices" : [
+
+    ],
+    "magicMouseCount" : 0
+  },
+  "mode" : "self-check",
+  "multitouchSupport" : {
+    "adapterAvailability" : "unavailable: No Magic Mouse multitouch device is connected",
+    "deviceCount" : 0,
+    "devices" : [
+
+    ],
+    "expectedTouchStride" : 96,
+    "frameworkPath" : "\/System\/Library\/PrivateFrameworks\/MultitouchSupport.framework\/MultitouchSupport",
+    "layoutProblem" : "",
+    "loaded" : true,
+    "loadError" : "",
+    "symbols" : [
+      {
+        "name" : "MTDeviceCreateList",
+        "required" : true,
+        "resolved" : true
+      },
+      {
+        "name" : "MTRegisterContactFrameCallback",
+        "required" : true,
+        "resolved" : true
+      },
+      {
+        "name" : "MTUnregisterContactFrameCallback",
+        "required" : true,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceStart",
+        "required" : true,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceStop",
+        "required" : true,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceCreateDefault",
+        "required" : false,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceRelease",
+        "required" : false,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceIsRunning",
+        "required" : false,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceIsBuiltIn",
+        "required" : false,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceGetFamilyID",
+        "required" : false,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceGetDeviceID",
+        "required" : false,
+        "resolved" : true
+      },
+      {
+        "name" : "MTDeviceGetSensorSurfaceDimensions",
+        "required" : false,
+        "resolved" : true
+      }
+    ],
+    "touchStride" : 96,
+    "unavailableReason" : ""
+  },
+  "os" : {
+    "architecture" : "arm64",
+    "major" : 26,
+    "minor" : 7,
+    "patch" : 2,
+    "versionString" : "Version 26.7.2 (Build 25G332)"
+  },
+  "permissions" : {
+    "accessibilityTrusted" : true,
+    "listenEventAccess" : true,
+    "postEventAccess" : true
+  },
+  "tool" : "mfprobe"
+}
+```
+
 ## Sources
 - Linux kernel `drivers/hid/hid-ids.h`, `hid-magicmouse.c` (product ids, report ids): https://github.com/torvalds/linux/blob/master/drivers/hid/hid-ids.h
 - OpenMultitouchSupport `OpenMTInternal.h` (MTTouch layout, states, MTDevice functions): https://github.com/Kyome22/OpenMultitouchSupport

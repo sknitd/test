@@ -127,7 +127,6 @@ struct ActionParameterSection: View {
         case .radialMenu: ActionRadialMenuPicker(action: $action)
         case .ai: ActionAITemplatePicker(action: $action)
         case .control: ActionControlEditor(action: $action)
-        default: EmptyView()
         }
     }
 }

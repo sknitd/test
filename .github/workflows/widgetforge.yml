@@ -1,0 +1,30 @@
+name: WidgetForge
+
+on:
+  push:
+    paths:
+      - "WidgetForge/**"
+      - ".github/workflows/widgetforge.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: widgetforge-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-tests:
+    name: Core unit tests (swift test)
+    runs-on: macos-14
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: WidgetForge
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          sw_vers
+          xcodebuild -version
+          swift --version
+      - name: Build and test WidgetForgeKit
+        run: swift test 2>&1 | tail -n 400

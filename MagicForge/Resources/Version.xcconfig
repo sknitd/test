@@ -1,0 +1,5 @@
+// Single source of truth for the app version.
+// Read by the Xcode project (base configuration of the MagicForge target) and by
+// Scripts/lib/common.sh (no-Xcode build, DMG naming). Keep the `NAME = value` form.
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1

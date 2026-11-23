@@ -1,0 +1,194 @@
+import SwiftUI
+import AppKit
+import MFCore
+import MFUtilities
+import MFEngine
+import MFProfiles
+import MFIntegrations
+import MFDevices
+import MFInput
+import MFActions
+import MFUI
+
+/// Late-bound "open the main window" hook. `Services.openDashboard` has to exist before the
+/// composition root has finished initialising, so it calls through this box.
+@MainActor
+final class DashboardOpener {
+    var handler: (() -> Void)?
+    func open() { handler?() }
+}
+
+/// The one place where concrete implementations are chosen and wired together.
+///
+/// Integration notes are marked `// WIRING:` at every spot that depends on details of modules
+/// this file was written without seeing (it was first compiled on the macOS CI runner).
+@MainActor
+final class CompositionRoot {
+    /// Shared by `MagicForgeApp` (scenes) and `MagicForgeAppDelegate` (lifecycle), which SwiftUI
+    /// creates independently of each other.
+    static let shared = CompositionRoot()
+
+    let model: AppModel
+    let navigation: NavigationState
+    /// Where the configuration file lives; handed to the UI for "Reveal in Finder".
+    let configurationLocation: URL?
+
+    // Retained here as well as by `Services` so their lifetime is obvious.
+    private let radialMenuController: RadialMenuController
+    private let aiInteractionController: AIInteractionController
+    private let dashboardOpener: DashboardOpener
+
+    private let log = Log("app")
+
+    // MARK: Window bookkeeping
+
+    private var openWindowAction: OpenWindowAction?
+    private weak var mainWindow: NSWindow?
+    private var hasStarted: Bool = false
+    /// True once the "start minimized" decision has been made (or can no longer apply).
+    private var hasAppliedLaunchVisibility: Bool = false
+
+    // MARK: Construction
+
+    private init() {
+        // --- Persistence ---------------------------------------------------------------
+        // WIRING: JSONConfigurationStore(directory:) and its static defaultDirectory are pinned
+        // in the brief. `location` comes from ConfigurationStoring.
+        let store = JSONConfigurationStore(directory: JSONConfigurationStore.defaultDirectory)
+
+        // --- Input ---------------------------------------------------------------------
+        // WIRING: adapters are tried in order; the private MultitouchSupport adapter is the only
+        // touch adapter. If MFInput gains a public-API fallback adapter, append it here.
+        let multitouchAdapter = MultitouchSupportAdapter()
+        let pointerSource = EventTapPointerSource()
+        // WIRING: MFInput exposes an activity hook used by the scroll-origin heuristic (the event
+        // tap asks "was the Magic Mouse surface touched just now?"). Connect the adapter's hook
+        // to the pointer source here, e.g. `pointerSource.<activityProvider> = { multitouchAdapter.<lastActivity> }`.
+        // Nothing is connected yet because the hook's name was not part of the contract.
+        let deviceMonitor = HIDDeviceMonitor()
+
+        // --- System services -----------------------------------------------------------
+        let permissions = SystemPermissions()
+        // WIRING: SystemActionPerformer(permissions:) is pinned; if it needs more collaborators
+        // (text access, notifier) pass them here.
+        let performer = SystemActionPerformer(permissions: permissions)
+        let frontmostApp = WorkspaceAppProvider()
+        let textAccess = PasteboardTextAccess()
+        let notifier = UserNotificationNotifier()
+        // WIRING: the Keychain service name must stay stable or saved API keys become invisible.
+        let secrets = KeychainSecretStore(service: "com.magicforge.app")
+        let aiClient = OpenAICompatibleClient()
+
+        // --- UI-backed presenters --------------------------------------------------------
+        // WIRING: both controllers are pinned as `public init()`. If either needs the model or
+        // the animation setting, inject it after `AppModel` is created below.
+        let radialMenuController = RadialMenuController()
+        let aiInteractionController = AIInteractionController()
+
+        let dashboardOpener = DashboardOpener()
+
+        let services = Services(
+            adapters: [multitouchAdapter],
+            deviceMonitor: deviceMonitor,
+            permissions: permissions,
+            frontmostApp: frontmostApp,
+            performer: performer,
+            pointerEvents: pointerSource,
+            textAccess: textAccess,
+            secrets: secrets,
+            notifier: notifier,
+            radialMenu: radialMenuController,
+            ai: aiClient,
+            aiPresenter: aiInteractionController,
+            store: store,
+            openDashboard: { dashboardOpener.open() }
+        )
+
+        self.model = AppModel(services: services)
+        self.navigation = NavigationState()
+        self.configurationLocation = store.location
+        self.radialMenuController = radialMenuController
+        self.aiInteractionController = aiInteractionController
+        self.dashboardOpener = dashboardOpener
+
+        dashboardOpener.handler = { [weak self] in
+            self?.showMainWindow()
+        }
+    }
+
+    // MARK: Lifecycle (called by the app delegate)
+
+    /// Starts the engine exactly once.
+    func applicationDidFinishLaunching() {
+        guard !hasStarted else { return }
+        // WIRING: `model.start()` is expected to load the saved configuration synchronously, so
+        // `startMinimized` is known right after it returns. If loading becomes asynchronous,
+        // call `applyLaunchVisibilityIfReady()` when loading completes instead.
+        model.start()
+        hasStarted = true
+        applyLaunchVisibilityIfReady()
+        // The launch window normally attaches before or right after this callback. Stop waiting
+        // after a moment so a window the user opens later is never closed by mistake.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            self?.hasAppliedLaunchVisibility = true
+        }
+    }
+
+    func applicationWillTerminate() {
+        model.saveNow()
+        model.stop()
+    }
+
+    func applicationDidBecomeActive() {
+        guard hasStarted else { return }
+        model.refreshPermissions()
+    }
+
+    // MARK: Main window
+
+    /// Remembers SwiftUI's window-opening action; it is the supported way to reopen a closed
+    /// `Window` scene and is only available from inside a view.
+    func registerOpenWindow(_ action: OpenWindowAction) {
+        openWindowAction = action
+    }
+
+    /// Called when the main window's content is attached to its NSWindow.
+    func mainWindowDidAttach(_ window: NSWindow) {
+        mainWindow = window
+        applyLaunchVisibilityIfReady()
+    }
+
+    /// "Start minimized": SwiftUI always creates the `Window` scene's window at launch and has
+    /// no scene-level switch to suppress it on macOS 14, so the launch window is closed as soon
+    /// as both facts are known: the configuration is loaded and the window exists. The app keeps
+    /// running (Dock icon and menu bar item); the window reopens from either.
+    private func applyLaunchVisibilityIfReady() {
+        guard hasStarted, !hasAppliedLaunchVisibility, let window = mainWindow else { return }
+        hasAppliedLaunchVisibility = true
+        guard model.configuration.settings.startMinimized else { return }
+        log.info("Start minimized: closing the launch window")
+        Task { @MainActor in
+            window.close()
+        }
+    }
+
+    /// Opens or focuses the main window. Used by `Services.openDashboard` and Dock reopen.
+    func showMainWindow() {
+        hasAppliedLaunchVisibility = true
+        NSApp.activate(ignoringOtherApps: true)
+        if let openWindowAction {
+            openWindowAction(id: MagicForgeWindowID.main)
+            return
+        }
+        // Fallback for the short time before any view has registered the open action.
+        let existing: NSWindow? = mainWindow ?? NSApp.windows.first { window in
+            window.identifier?.rawValue == MagicForgeWindowID.main
+        }
+        if let existing {
+            existing.makeKeyAndOrderFront(nil)
+        } else {
+            log.error("Main window could not be opened: no open-window action registered yet")
+        }
+    }
+}

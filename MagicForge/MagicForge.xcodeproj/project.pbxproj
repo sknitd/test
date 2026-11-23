@@ -1,0 +1,296 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		35B852288C001B4E7507B427B05CE61E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4EC1AEB2E1F1BACEF03060FE8916E4A8 /* Assets.xcassets */; };
+		4A89EA95778BFE2B8861777E02B90DDB /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5132B2E9DA6974500987E035BD34B2B4 /* main.swift */; };
+		84FE72295D00CAC323CD96A0F1DF1166 /* MFApp in Frameworks */ = {isa = PBXBuildFile; productRef = EDD5C491911BE4E458C8939589EC5D11 /* MFApp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		023B7BC0979D3D50CC97DE64958D0FBA /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = Resources/Info.plist; sourceTree = "<group>"; };
+		13C0CA00F70F35C167E9375B6EF05CE5 /* Version.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Version.xcconfig; path = Resources/Version.xcconfig; sourceTree = "<group>"; };
+		4EC1AEB2E1F1BACEF03060FE8916E4A8 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
+		5132B2E9DA6974500987E035BD34B2B4 /* main.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = main.swift; path = Sources/AppMain/main.swift; sourceTree = "<group>"; };
+		62D9B81837C17A384CC252AAB1AAFBD8 /* MagicForge.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; name = MagicForge.entitlements; path = Resources/MagicForge.entitlements; sourceTree = "<group>"; };
+		FF98DA07F9CA854B3D417AA2F75DE90E /* MagicForge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MagicForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		BA0725AE7BBC393EE908B61A733008C5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				84FE72295D00CAC323CD96A0F1DF1166 /* MFApp in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0968B0669DEC5BAECCEE4A9EF94C4053 = {
+			isa = PBXGroup;
+			children = (
+				23FFA63E3A37D702C6997351ED990BE5 /* App */,
+				EC48C4208D1EE11082C3112AB7A64AE9 /* Products */,
+				A3A3204B6C17A332AB66F4AACF994019 /* Resources */,
+			);
+			sourceTree = "<group>";
+		};
+		23FFA63E3A37D702C6997351ED990BE5 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				5132B2E9DA6974500987E035BD34B2B4 /* main.swift */,
+			);
+			name = App;
+			sourceTree = "<group>";
+		};
+		A3A3204B6C17A332AB66F4AACF994019 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				4EC1AEB2E1F1BACEF03060FE8916E4A8 /* Assets.xcassets */,
+				023B7BC0979D3D50CC97DE64958D0FBA /* Info.plist */,
+				62D9B81837C17A384CC252AAB1AAFBD8 /* MagicForge.entitlements */,
+				13C0CA00F70F35C167E9375B6EF05CE5 /* Version.xcconfig */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		EC48C4208D1EE11082C3112AB7A64AE9 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FF98DA07F9CA854B3D417AA2F75DE90E /* MagicForge.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8AB97C978A9A5D815AE446727A6B84C4 /* MagicForge */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7E9EA3707DE52075CD4F1E434A9D35F1 /* Build configuration list for PBXNativeTarget "MagicForge" */;
+			buildPhases = (
+				EA78AA2B962B9C3946261123998F0769 /* Sources */,
+				BA0725AE7BBC393EE908B61A733008C5 /* Frameworks */,
+				45E6B093594A5383C4BFE1B4306302FB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MagicForge;
+			packageProductDependencies = (
+				EDD5C491911BE4E458C8939589EC5D11 /* MFApp */,
+			);
+			productName = MagicForge;
+			productReference = FF98DA07F9CA854B3D417AA2F75DE90E /* MagicForge.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		57756A3B5792C4DAFBC4FE1DDED32005 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+			};
+			buildConfigurationList = 9813759EC4DF1DAA3EFCA075553CFDFC /* Build configuration list for PBXProject "MagicForge" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 0968B0669DEC5BAECCEE4A9EF94C4053;
+			packageReferences = (
+				B91CAA14537626E84ACD7A09DABD637C /* XCLocalSwiftPackageReference "." */,
+			);
+			productRefGroup = EC48C4208D1EE11082C3112AB7A64AE9 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8AB97C978A9A5D815AE446727A6B84C4 /* MagicForge */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		45E6B093594A5383C4BFE1B4306302FB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				35B852288C001B4E7507B427B05CE61E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		EA78AA2B962B9C3946261123998F0769 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4A89EA95778BFE2B8861777E02B90DDB /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		26006595F40E760F0CE23A6A8C4FCB84 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 13C0CA00F70F35C167E9375B6EF05CE5 /* Version.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Resources/MagicForge.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.magicforge.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		2603B6718C6DE63A3BDA741191BCE376 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		7A5680FD8C553205EA3798FC0A0CBD34 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = NO;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		F33582FA8BC2607FCB58C161787FE7D3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 13C0CA00F70F35C167E9375B6EF05CE5 /* Version.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Resources/MagicForge.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.magicforge.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7E9EA3707DE52075CD4F1E434A9D35F1 /* Build configuration list for PBXNativeTarget "MagicForge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				26006595F40E760F0CE23A6A8C4FCB84 /* Debug */,
+				F33582FA8BC2607FCB58C161787FE7D3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9813759EC4DF1DAA3EFCA075553CFDFC /* Build configuration list for PBXProject "MagicForge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2603B6718C6DE63A3BDA741191BCE376 /* Debug */,
+				7A5680FD8C553205EA3798FC0A0CBD34 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		B91CAA14537626E84ACD7A09DABD637C /* XCLocalSwiftPackageReference "." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		EDD5C491911BE4E458C8939589EC5D11 /* MFApp */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MFApp;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 57756A3B5792C4DAFBC4FE1DDED32005 /* Project object */;
+}

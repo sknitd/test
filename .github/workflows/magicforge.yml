@@ -1,5 +1,11 @@
 name: MagicForge
 
+# Builds, tests and packages MagicForge (the Swift package in MagicForge/).
+# Designed so that ONE run yields as much information as possible: independent steps keep
+# running after a failure, compile errors are summarised, and every log is uploaded.
+# Runner notes: macos-14 is retired. macos-15 defaults to Xcode 16.4, macos-26 to Xcode 26.x;
+# the third macOS entry pins Xcode 16.0, the oldest toolchain available (minimum verified).
+
 on:
   push:
     branches: ["ccr-98b7fad9-jid67a"]
@@ -10,21 +16,347 @@ concurrency:
   group: magicforge-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+    working-directory: MagicForge
+
 jobs:
-  pipeline-check:
-    runs-on: macos-14
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: MagicForge
+  # ---------------------------------------------------------------------------------------
+  linux-core:
+    name: Linux portable modules (${{ matrix.image }})
+    runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
+    timeout-minutes: 30
+    # Swift 5.10 is informational: it guards against syntax newer than the package's
+    # declared tools version, but the minimum verified toolchain is Swift 6.0.
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: "swift:6.0-noble"
+            experimental: false
+          - image: "swift:5.10-noble"
+            experimental: true
     steps:
       - uses: actions/checkout@v4
       - name: Environment
         run: |
-          sw_vers
-          uname -m
-          xcodebuild -version
           swift --version
-          ls /Applications | grep -i xcode || true
-      - name: Build portable core
-        run: MF_ONLY=MFCore swift build
+          uname -a
+      - name: swift build
+        run: |
+          mkdir -p ci-artifacts
+          swift build 2>&1 | tee ci-artifacts/linux-build.log
+      - name: Compile error summary
+        if: failure()
+        run: |
+          echo "Unique compile errors:"
+          grep -E "error:" ci-artifacts/linux-build.log | sort -u || true
+      - name: swift test
+        if: ${{ !cancelled() }}
+        run: swift test 2>&1 | tee ci-artifacts/linux-test.log
+      - name: Per-module tests (only when the full run failed)
+        if: ${{ failure() }}
+        run: Scripts/test.sh --per-module 2>&1 | tee ci-artifacts/linux-test-per-module.log
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-logs-${{ strategy.job-index }}
+          path: MagicForge/ci-artifacts/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------------------
+  project-lint:
+    name: Project, scripts and resources
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell scripts (bash -n, shellcheck)
+        run: |
+          for script in Scripts/*.sh Scripts/lib/*.sh; do bash -n "$script"; done
+          if command -v shellcheck >/dev/null; then shellcheck -x Scripts/*.sh Scripts/lib/*.sh; else echo "shellcheck not installed; skipped"; fi
+      - name: Property lists
+        if: ${{ !cancelled() }}
+        run: |
+          python3 - <<'PY'
+          import plistlib
+          info = plistlib.load(open("Resources/Info.plist", "rb"))
+          for key in ["CFBundleName", "CFBundleDisplayName", "CFBundleIdentifier", "CFBundleExecutable",
+                      "CFBundleVersion", "CFBundleShortVersionString", "CFBundlePackageType",
+                      "LSMinimumSystemVersion", "LSApplicationCategoryType", "NSHumanReadableCopyright",
+                      "NSAppleEventsUsageDescription", "NSPrincipalClass", "CFBundleIconFile", "CFBundleIconName"]:
+              assert key in info, f"Info.plist is missing {key}"
+          assert "LSUIElement" not in info, "LSUIElement must not be set"
+          ent = plistlib.load(open("Resources/MagicForge.entitlements", "rb"))
+          assert ent == {"com.apple.security.automation.apple-events": True}, ent
+          print("Info.plist and entitlements OK")
+          PY
+      - name: Icon assets
+        if: ${{ !cancelled() }}
+        run: |
+          python3 -m pip install --quiet --user Pillow || python3 -m pip install --quiet --user --break-system-packages Pillow
+          python3 Scripts/generate_icon.py --check
+      - name: Xcode project is reproducible and valid
+        if: ${{ !cancelled() }}
+        run: |
+          gem install --user-install --no-document xcodeproj -v 1.28.1
+          ruby Scripts/generate_xcodeproj.rb
+          git diff --exit-code -- MagicForge.xcodeproj || { echo "::error::MagicForge.xcodeproj is stale; run ruby Scripts/generate_xcodeproj.rb and commit"; exit 1; }
+          ruby Scripts/verify_xcodeproj.rb
+
+  # ---------------------------------------------------------------------------------------
+  macos:
+    name: macOS (${{ matrix.id }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: macos-15
+            os: macos-15
+            xcode: ""
+            universal: true
+          - id: macos-26
+            os: macos-26
+            xcode: ""
+            universal: false
+          # Oldest available toolchain: guards minimum-toolchain compatibility (Swift 6.0
+          # compiler, Swift 5 language mode).
+          - id: macos-15-xcode16.0
+            os: macos-15
+            xcode: /Applications/Xcode_16.0.app
+            universal: false
+    env:
+      ART: ci-artifacts
+      ID: ${{ matrix.id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        if: ${{ matrix.xcode != '' }}
+        run: sudo xcode-select -s "${{ matrix.xcode }}"
+
+      - name: Environment
+        run: |
+          mkdir -p "$ART"
+          {
+            sw_vers
+            uname -m
+            xcodebuild -version
+            xcode-select -p
+            swift --version
+            sysctl -n machdep.cpu.brand_string hw.ncpu hw.memsize
+          } 2>&1 | tee "$ART/environment-$ID.txt"
+
+      # --- SwiftPM debug build of every target -------------------------------------------
+      - name: swift build
+        id: build
+        run: swift build 2>&1 | tee "$ART/build-$ID.log"
+
+      - name: Compile error summary
+        if: ${{ !cancelled() && steps.build.outcome == 'failure' }}
+        run: |
+          grep -E "error:" "$ART/build-$ID.log" | sed "s|$PWD/||" | sort -u > "$ART/build-errors-$ID.txt" || true
+          echo "===== $(wc -l < "$ART/build-errors-$ID.txt" | tr -d ' ') unique error line(s) ====="
+          cat "$ART/build-errors-$ID.txt"
+          {
+            echo "### swift build errors ($ID)"
+            echo '```'
+            head -n 200 "$ART/build-errors-$ID.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # SwiftPM stops at the first failing module. To harvest errors from as many modules as
+      # possible in one run, build each target on its own and let the compiler continue past
+      # errors inside a module. Uses a separate scratch directory to keep the main cache intact.
+      - name: Per-target builds, continuing after errors (diagnostic)
+        if: ${{ !cancelled() && steps.build.outcome == 'failure' }}
+        run: |
+          set +e
+          : > "$ART/build-per-target-errors-$ID.txt"
+          for target in MFUtilities MFCore MFGestures MFProfiles MFAutomation MFIntegrations MFEngine \
+                        MFDevices MFInput MFActions MFUI MFApp MagicForgeApp mfprobe; do
+            log="$ART/build-target-$target-$ID.log"
+            swift build --scratch-path .build-diag --target "$target" \
+              -Xswiftc -continue-building-after-errors > "$log" 2>&1
+            status=$?
+            count=$(grep -E "error:" "$log" | sort -u | wc -l | tr -d ' ')
+            echo "::group::$target: exit $status, $count unique error line(s)"
+            grep -E "error:" "$log" | sed "s|$PWD/||" | sort -u | tee -a "$ART/build-per-target-errors-$ID.txt"
+            echo "::endgroup::"
+            echo "| $target | $status | $count |" >> "$ART/per-target-table.md"
+          done
+          sort -u -o "$ART/build-per-target-errors-$ID.txt" "$ART/build-per-target-errors-$ID.txt"
+          echo "===== All unique errors across targets ====="
+          cat "$ART/build-per-target-errors-$ID.txt"
+          {
+            echo "### Per-target build ($ID)"
+            echo "| target | exit | unique errors |"
+            echo "|---|---|---|"
+            cat "$ART/per-target-table.md"
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
+      # --- Tests ----------------------------------------------------------------------------
+      - name: swift test
+        id: test
+        if: ${{ !cancelled() }}
+        run: swift test 2>&1 | tee "$ART/test-$ID.log"
+
+      - name: Per-module portable tests (only when swift test failed)
+        id: test_modules
+        if: ${{ !cancelled() && steps.test.outcome == 'failure' }}
+        run: Scripts/test.sh --per-module 2>&1 | tee "$ART/test-per-module-$ID.log"
+
+      # --- Probe (non-fatal: CI runners have no Magic Mouse) ----------------------------------
+      - name: mfprobe --self-check
+        id: probe
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 10
+        run: swift run mfprobe --self-check 2>&1 | tee "$ART/probe-$ID.txt"
+
+      # --- Xcode project ------------------------------------------------------------------------
+      - name: xcodebuild (Release, universal, ad-hoc signed)
+        id: xcode
+        if: ${{ !cancelled() }}
+        run: |
+          xcodebuild -list -project MagicForge.xcodeproj 2>&1 | tee "$ART/xcodebuild-list-$ID.txt" || true
+          if ! DIST_DIR=dist-xcode Scripts/build_xcode.sh > "$ART/xcodebuild-$ID.log" 2>&1; then
+            echo "===== xcodebuild failed; unique error lines ====="
+            grep -E "error:|BUILD FAILED|The following build commands failed" "$ART/xcodebuild-$ID.log" | sed "s|$PWD/||" | sort -u
+            echo "===== last 80 lines ====="
+            tail -n 80 "$ART/xcodebuild-$ID.log"
+            exit 1
+          fi
+          tail -n 15 "$ART/xcodebuild-$ID.log"
+          codesign -dvv --entitlements - dist-xcode/MagicForge.app 2>&1 | tee "$ART/codesign-xcode-$ID.txt"
+          /usr/libexec/PlistBuddy -c Print dist-xcode/MagicForge.app/Contents/Info.plist | tee "$ART/info-plist-xcode-$ID.txt"
+          ls -la dist-xcode/MagicForge.app/Contents/Resources
+          ditto -c -k --keepParent dist-xcode/MagicForge.app "$ART/MagicForge-xcode-$ID.zip"
+
+      # --- No-Xcode app bundle + DMG --------------------------------------------------------------
+      - name: Scripts/build_app.sh
+        id: app
+        if: ${{ !cancelled() }}
+        run: |
+          Scripts/build_app.sh 2>&1 | tee "$ART/build_app-$ID.log"
+          codesign -dvv --entitlements - dist/MagicForge.app 2>&1 | tee "$ART/codesign-spm-$ID.txt"
+          ditto -c -k --keepParent dist/MagicForge.app "$ART/MagicForge-spm-$ID.zip"
+
+      - name: Scripts/make_dmg.sh
+        id: dmg
+        if: ${{ !cancelled() && steps.app.outcome == 'success' }}
+        run: |
+          dmg="$(Scripts/make_dmg.sh)"
+          cp "$dmg" "$ART/$(basename "${dmg%.dmg}")-$ID.dmg"
+          ls -la "$ART"/*.dmg
+
+      - name: Universal SwiftPM build (UNIVERSAL=1)
+        id: universal
+        if: ${{ !cancelled() && matrix.universal && steps.app.outcome == 'success' }}
+        continue-on-error: true
+        run: |
+          UNIVERSAL=1 DIST_DIR=dist-universal Scripts/build_app.sh 2>&1 | tee "$ART/build_app-universal-$ID.log"
+          lipo -archs dist-universal/MagicForge.app/Contents/MacOS/MagicForge
+
+      # --- Launch smoke test + idle sample (non-fatal, reported) ------------------------------------
+      - name: Launch smoke test and idle measurement
+        id: smoke
+        if: ${{ !cancelled() && steps.app.outcome == 'success' }}
+        continue-on-error: true
+        timeout-minutes: 5
+        run: |
+          set +e
+          result=0
+          dist/MagicForge.app/Contents/MacOS/MagicForge > "$ART/smoke-stdout-$ID.log" 2> "$ART/smoke-stderr-$ID.log" &
+          pid=$!
+          echo "Launched pid $pid"
+          sleep 10
+          if kill -0 "$pid" 2>/dev/null; then
+            echo "ALIVE after 10 s" | tee "$ART/smoke-result-$ID.txt"
+            Scripts/measure_idle.sh --pid "$pid" --duration 20 --interval 1 --output "$ART/idle-$ID.txt" || result=1
+            if kill -0 "$pid" 2>/dev/null; then
+              echo "ALIVE after idle sampling" | tee -a "$ART/smoke-result-$ID.txt"
+            else
+              echo "EXITED during idle sampling" | tee -a "$ART/smoke-result-$ID.txt"; result=1
+            fi
+          else
+            wait "$pid"; echo "EXITED within 10 s (status $?)" | tee "$ART/smoke-result-$ID.txt"; result=1
+          fi
+          kill "$pid" 2>/dev/null; sleep 1; kill -9 "$pid" 2>/dev/null
+          echo "===== stderr ====="; cat "$ART/smoke-stderr-$ID.log"
+          log show --last 3m --style compact --predicate 'subsystem == "com.magicforge.app" OR process == "MagicForge"' \
+            > "$ART/smoke-oslog-$ID.txt" 2>&1
+          echo "===== unified log (last 60 lines) ====="; tail -n 60 "$ART/smoke-oslog-$ID.txt"
+          sleep 5
+          reports=$(ls ~/Library/Logs/DiagnosticReports/MagicForge* 2>/dev/null)
+          if [ -n "$reports" ]; then
+            echo "CRASH REPORT(S) FOUND" | tee -a "$ART/smoke-result-$ID.txt"; result=1
+            for report in $reports; do cp "$report" "$ART/"; head -n 60 "$report"; done
+          fi
+          exit $result
+
+      - name: Step summary
+        if: always()
+        run: |
+          {
+            echo "### MagicForge on $ID"
+            echo "| step | outcome |"
+            echo "|---|---|"
+            echo "| swift build | ${{ steps.build.outcome }} |"
+            echo "| swift test | ${{ steps.test.outcome }} |"
+            echo "| per-module tests (fallback) | ${{ steps.test_modules.outcome }} |"
+            echo "| mfprobe --self-check (non-fatal) | ${{ steps.probe.outcome }} |"
+            echo "| xcodebuild | ${{ steps.xcode.outcome }} |"
+            echo "| build_app.sh | ${{ steps.app.outcome }} |"
+            echo "| make_dmg.sh | ${{ steps.dmg.outcome }} |"
+            echo "| universal SwiftPM build (non-fatal) | ${{ steps.universal.outcome }} |"
+            echo "| launch smoke + idle (non-fatal) | ${{ steps.smoke.outcome }} |"
+            if [ -f "$ART/idle-$ID.txt" ]; then
+              echo; echo '```'; cat "$ART/idle-$ID.txt"; echo '```'
+            fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload DMG
+        if: ${{ always() && steps.dmg.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: MagicForge-dmg-${{ matrix.id }}
+          path: MagicForge/ci-artifacts/*.dmg
+          if-no-files-found: warn
+
+      - name: Upload app bundles (zipped)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MagicForge-app-${{ matrix.id }}
+          path: MagicForge/ci-artifacts/*.zip
+          if-no-files-found: warn
+
+      - name: Upload probe output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-${{ matrix.id }}
+          path: MagicForge/ci-artifacts/probe-${{ matrix.id }}.txt
+          if-no-files-found: warn
+
+      - name: Upload logs and measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.id }}
+          path: |
+            MagicForge/ci-artifacts/
+            !MagicForge/ci-artifacts/*.zip
+            !MagicForge/ci-artifacts/*.dmg
+          if-no-files-found: warn

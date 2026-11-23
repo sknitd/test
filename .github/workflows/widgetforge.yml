@@ -27,4 +27,8 @@ jobs:
           xcodebuild -version
           swift --version
       - name: Build and test WidgetForgeKit
-        run: swift test 2>&1 | tail -n 400
+        shell: bash
+        run: |
+          set -o pipefail
+          swift build --build-tests 2>&1 | grep -E "error|warning: unre|Compiling|Build complete" | grep -v "^\[" | head -n 150 || true
+          swift test 2>&1 | tail -n 250

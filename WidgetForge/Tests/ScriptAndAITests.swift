@@ -105,8 +105,12 @@ final class MockScriptHost: ScriptHost, @unchecked Sendable {
 }
 
 final class ScriptRuntimeTests: XCTestCase {
+    /// The runtime holds its host weakly (as the app does), so the test keeps hosts alive for its duration.
+    private var hosts: [MockScriptHost] = []
+
     func runtime(_ source: String, host: MockScriptHost = MockScriptHost(), limits: ScriptLimits = ScriptLimits()) -> (ScriptRuntime, MockScriptHost) {
-        (ScriptRuntime(source: source, host: host, limits: limits), host)
+        hosts.append(host)
+        return (ScriptRuntime(source: source, host: host, limits: limits), host)
     }
 
     func testSDKExampleFromTheDocsRuns() async throws {

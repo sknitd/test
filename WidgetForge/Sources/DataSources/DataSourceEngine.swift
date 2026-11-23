@@ -517,6 +517,7 @@ final class Box<T>: @unchecked Sendable {
 
 // MARK: URLSession transports
 
+#if canImport(Darwin)
 /// Production HTTP transport. Ephemeral (no cookies, no credential storage, no disk cache) and it refuses
 /// redirects to a different host, because a redirect would otherwise sidestep the widget's allowlist.
 final class URLSessionTransport: NSObject, HTTPTransport, URLSessionTaskDelegate, @unchecked Sendable {
@@ -553,7 +554,6 @@ final class URLSessionTransport: NSObject, HTTPTransport, URLSessionTaskDelegate
     }
 }
 
-#if canImport(Darwin)
 final class URLSessionStreamTransport: StreamTransport, @unchecked Sendable {
     private let session = URLSession(configuration: .ephemeral)
 

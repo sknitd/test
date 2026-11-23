@@ -137,3 +137,48 @@ final class JSONAndTemplateTests: XCTestCase {
         XCTAssertEqual(parsed.path("[1].qty"), 4.5)
     }
 }
+
+final class SharedSnapshotTests: XCTestCase {
+    func testSnapshotAndPendingChangesRoundTripThroughFiles() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("wf-shared-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let widget = SnapshotWidget(id: "w1", name: "To-do", symbol: "checklist", definition: TemplateLibrary.todo,
+                                    state: ["items": []], allowsSystemMetrics: false, data: [:], statuses: [:], scriptNode: nil)
+        XCTAssertTrue(SharedContainer.writeSnapshot(SharedSnapshot(widgets: [widget]), in: dir))
+        XCTAssertEqual(SharedContainer.readSnapshot(in: dir)?.widgets.map(\.id), ["w1"])
+
+        let change = PendingStateChange(widgetID: "w1", key: "items", value: [["title": "Ship", "done": true]])
+        SharedContainer.appendPending(change, in: dir)
+        SharedContainer.apply(change, in: dir)
+        XCTAssertEqual(SharedContainer.readSnapshot(in: dir)?.widgets[0].state["items"], [["title": "Ship", "done": true]])
+        XCTAssertEqual(SharedContainer.drainPending(in: dir).map(\.key), ["items"])
+        XCTAssertTrue(SharedContainer.drainPending(in: dir).isEmpty, "draining clears the queue")
+        XCTAssertNil(SharedContainer.readSnapshot(in: nil))
+    }
+
+    func testStateChangesForActions() {
+        let state: [String: JSONValue] = ["on": true, "n": 2]
+        XCTAssertEqual(SharedContainer.stateChange(for: .toggleState(key: "on"), current: state)?.value, false)
+        XCTAssertEqual(SharedContainer.stateChange(for: .incrementState(key: "n", by: 3), current: state)?.value, 5)
+        XCTAssertEqual(SharedContainer.stateChange(for: .setState(key: "x", value: "y"), current: state)?.key, "x")
+        XCTAssertNil(SharedContainer.stateChange(for: .openURL("https://x.dev"), current: state))
+    }
+
+    func testContextAndImplicitMetricSources() {
+        let definition = WidgetDefinition(name: "M", size: WidgetSize(200, 100),
+                                          root: .column([WidgetNode(.metric, props: ["metric": "memory"]), WidgetNode(.metric, props: ["metric": "cpu"])]),
+                                          dataSources: [.metric("cpu", interval: 5)])
+        let sources = WidgetContextBuilder.effectiveSources(for: definition)
+        XCTAssertEqual(sources.map(\.id), ["cpu", "memory"])
+        XCTAssertEqual(sources[0].interval, 5, "explicit sources are not duplicated")
+        let context = WidgetContextBuilder.context(state: ["a": 1], settings: ["b": 2], data: ["cpu": ["usage": 0.5]],
+                                                   statuses: ["cpu": DataSourceStatus.ok.json])
+        XCTAssertEqual(context.path("state.a"), 1)
+        XCTAssertEqual(context.path("settings.b"), 2)
+        XCTAssertEqual(context.path("cpu.usage"), 0.5)
+        XCTAssertEqual(context.path("sources.cpu.state"), "ok")
+        XCTAssertEqual(context.path("sources.cpu.healthy"), true)
+    }
+}

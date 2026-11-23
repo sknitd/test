@@ -16,7 +16,7 @@ struct ProfileRule: Codable, Hashable, Identifiable, Sendable {
         switch kind {
         case .time(let start, let end, let weekdays):
             let days = weekdays.count == 7 || weekdays.isEmpty ? "every day" : weekdays.sorted().map { Calendar.current.shortWeekdaySymbols[($0 - 1 + 7) % 7] }.joined(separator: " ")
-            return String(format: "%02d:%02d–%02d:%02d, %@", start / 60, start % 60, end / 60, end % 60, days)
+            return String(format: "%02d:%02d–%02d:%02d, ", start / 60, start % 60, end / 60, end % 60) + days
         case .activeApp(let ids): return "While " + (ids.isEmpty ? "(no apps chosen)" : ids.joined(separator: ", ")) + " is frontmost"
         case .display(let id): return id.isEmpty ? "When an external display is connected" : "When display \(id.prefix(8)) is connected"
         }

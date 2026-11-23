@@ -130,7 +130,7 @@ enum Formatters {
         var v = max(0, value)
         var i = 0
         while v >= 1024, i < units.count - 1 { v /= 1024; i += 1 }
-        return i == 0 ? "\(Int(v)) B" : String(format: v >= 100 ? "%.0f %@" : "%.1f %@", v, units[i])
+        return i == 0 ? "\(Int(v)) B" : String(format: v >= 100 ? "%.0f" : "%.1f", v) + " " + units[i]
     }
 
     /// 93784 -> "1d 2h 3m"

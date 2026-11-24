@@ -64,7 +64,7 @@ extension WidgetNode {
     }
 
     static func labeled(_ label: String, _ value: String) -> WidgetNode {
-        .row([.text(label, size: 12, color: "secondary"), .spacer, .text(value, size: 12, weight: "medium", design: "rounded")])
+        .row([.text(label, size: 12, color: "secondary", lineLimit: 1), .spacer, .text(value, size: 12, weight: "medium", design: "rounded", lineLimit: 1)])
     }
 
     /// A hint that is only visible while a data source reports a problem.

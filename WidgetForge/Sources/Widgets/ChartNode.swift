@@ -70,7 +70,8 @@ struct ChartNode: View {
             ForEach(points) { point in
                 switch kind {
                 case "bar":
-                    BarMark(x: .value("Index", point.id), y: .value("Value", point.value))
+                    // A categorical x axis lets Swift Charts size the bars to fill the plot.
+                    BarMark(x: .value("Index", String(point.id)), y: .value("Value", point.value))
                         .foregroundStyle(threshold.map { point.value >= $0 ? Color.red : color } ?? color)
                         .cornerRadius(2)
                 case "area":
@@ -93,7 +94,7 @@ struct ChartNode: View {
                     .foregroundStyle(Color.red.opacity(0.7))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
             }
-            if let hovered, !env.isWidgetKit {
+            if let hovered, !env.isWidgetKit, kind != "bar" {
                 RuleMark(x: .value("Index", hovered.id))
                     .foregroundStyle(Color.secondary.opacity(0.5))
                     .annotation(position: .top, alignment: .center, spacing: 2) {

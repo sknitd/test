@@ -99,10 +99,13 @@ jobs:
         run: |
           set -o pipefail
           ( sleep 28; screencapture -x build/desktop.png || true ) &
+          # Independent reading of system CPU over the same period, to cross-check the app's own figure.
+          ( sleep 8; top -l 3 -s 4 -n 4 -o cpu -stats pid,command,cpu | grep -E "CPU usage|^[0-9]" > build/top.txt || true ) &
           build/WidgetForge.app/Contents/MacOS/WidgetForge --self-test --hold 8 2>build/selftest.err | tee build/selftest.txt | head -n 260
           wait || true
           grep -q WIDGETFORGE_SELFTEST_END build/selftest.txt
           tail -n 20 build/selftest.err || true
+          echo "--- top (same period) ---"; cat build/top.txt || true
       - name: Package DMG
         run: Scripts/make_dmg.sh
       - uses: actions/upload-artifact@v4

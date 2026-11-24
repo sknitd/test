@@ -126,6 +126,22 @@ enum SelfTest {
             let elapsed = Date().timeIntervalSince(started)
             let cpuUsed = (ProcessMetrics.cpuTime() ?? 0) - cpuBefore
             let stats = await model.dataEngine.stats
+            let idleSamples = model.metricsHub.collector.sampleCount
+            let idleUpdates = model.diagnostics.counter("data.updates")
+            let appVisible = NSApp.occlusionState.contains(.visible)
+            let panelsVisible = model.overlay.panels.values.filter { $0.occlusionState.contains(.visible) }.count
+
+            // Active phase: hold an activity assertion so macOS cannot App Nap the process, then measure again.
+            // This is the cost of widgets that are really updating on screen.
+            let activity = ProcessInfo.processInfo.beginActivity(options: .userInitiatedAllowingIdleSystemSleep, reason: "WidgetForge self-test active phase")
+            let activeCPUBefore = ProcessMetrics.cpuTime() ?? 0
+            let activeStarted = Date()
+            try? await Task.sleep(nanoseconds: 8_000_000_000)
+            let activeElapsed = Date().timeIntervalSince(activeStarted)
+            let activeCPU = (ProcessMetrics.cpuTime() ?? 0) - activeCPUBefore
+            let activeSamples = model.metricsHub.collector.sampleCount - idleSamples
+            let activeUpdates = model.diagnostics.counter("data.updates") - idleUpdates
+            ProcessInfo.processInfo.endActivity(activity)
 
             // Exercise move/resize through the same store path the edit overlay uses.
             var moveOK = false
@@ -149,7 +165,7 @@ enum SelfTest {
             for (name, timing) in model.diagnostics.allTimings() {
                 timings[name] = ["count": .number(Double(timing.count)), "averageMs": .number(timing.average * 1000), "p95Ms": .number(timing.p95 * 1000), "maxMs": .number(timing.max * 1000)]
             }
-            let metrics = model.metricsHub.collector.sample()
+            let metrics = model.metricsHub.latest
             let report: JSONValue = [
                 "widgets": .array(model.widgets.map { .string($0.name) }),
                 "runtimes": .number(Double(model.runningRuntimeCount)),
@@ -159,6 +175,16 @@ enum SelfTest {
                 "moveResizeApplied": .bool(moveOK),
                 "displays": .array(ScreenGeometry.displays().map { .string("\($0.name) \(Int($0.frame.width))x\(Int($0.frame.height)) @\($0.scale)x") }),
                 "idleWindowSeconds": .number(elapsed),
+                "idleMetricSamples": .number(Double(idleSamples)),
+                "idleDataUpdates": .number(Double(idleUpdates)),
+                "appWindowVisible": .bool(appVisible),
+                "panelsReportingVisible": .number(Double(panelsVisible)),
+                "activeWindowSeconds": .number(activeElapsed),
+                "activeCPUPercent": .number(activeElapsed > 0 ? activeCPU / activeElapsed * 100 : 0),
+                "activeMetricSamples": .number(Double(activeSamples)),
+                "activeDataUpdates": .number(Double(activeUpdates)),
+                "metricsIntervalSeconds": .number(model.metricsHub.interval),
+                "log": .array(model.diagnostics.snapshot(minimumLevel: .info).suffix(20).map { .string("[\($0.category.rawValue)] \($0.message)") }),
                 "idleCPUPercent": .number(elapsed > 0 ? cpuUsed / elapsed * 100 : 0),
                 "memoryFootprintMB": .number((ProcessMetrics.memoryFootprint() ?? 0) / 1_048_576),
                 "metricsSampleCount": .number(Double(model.metricsHub.collector.sampleCount)),

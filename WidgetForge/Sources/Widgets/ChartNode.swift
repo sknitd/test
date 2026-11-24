@@ -119,8 +119,8 @@ struct ChartNode: View {
                         .onContinuousHover { phase in
                             switch phase {
                             case .active(let location):
-                                let origin = geometry[proxy.plotAreaFrame].origin
-                                if let index: Int = proxy.value(atX: location.x - origin.x) {
+                                let originX = proxy.plotFrame.map { geometry[$0].origin.x } ?? 0
+                                if let index: Int = proxy.value(atX: location.x - originX) {
                                     hovered = points.min { abs($0.id - index) < abs($1.id - index) }
                                 }
                             case .ended:

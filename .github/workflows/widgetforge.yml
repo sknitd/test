@@ -98,8 +98,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ( sleep 19; screencapture -x build/desktop.png || true ) &
-          build/WidgetForge.app/Contents/MacOS/WidgetForge --self-test --hold 6 2>build/selftest.err | tee build/selftest.txt | head -n 200
+          ( sleep 28; screencapture -x build/desktop.png || true ) &
+          build/WidgetForge.app/Contents/MacOS/WidgetForge --self-test --hold 8 2>build/selftest.err | tee build/selftest.txt | head -n 260
           wait || true
           grep -q WIDGETFORGE_SELFTEST_END build/selftest.txt
           tail -n 20 build/selftest.err || true

@@ -35,6 +35,7 @@ final class SystemMetricsCollector: SystemMetricsProvider {
 
     private let lock = NSLock()
     private var previousTicks: [[UInt32]] = []
+    private var lastCPU: JSONValue?
     private var previousNetwork: (rx: UInt64, tx: UInt64, time: Double)?
     private var previousDisk: (read: UInt64, write: UInt64, time: Double)?
     private var networkTotals: [String: (rx: UInt32, tx: UInt32)] = [:]
@@ -106,9 +107,15 @@ final class SystemMetricsCollector: SystemMetricsProvider {
             perCore.append(all > 0 ? (user + system) / all : 0)
             busyTotal += user + system; allTotal += all; userTotal += user; systemTotal += system
         }
+        // Ticks are 1/100 s. Two samples taken almost back to back cover too few ticks to mean anything, so the
+        // previous reading stands (and the tick baseline is kept) until enough time has passed.
+        if allTotal < Double(ticks.count) * 5, let last = lastCPU {
+            ticks = previousTicks
+            return last
+        }
         let usage = allTotal > 0 ? busyTotal / allTotal : 0
         cpuHistory.append(usage)
-        return [
+        let reading: JSONValue = [
             "available": true,
             "usage": .number(usage),
             "user": .number(allTotal > 0 ? userTotal / allTotal : 0),
@@ -117,6 +124,8 @@ final class SystemMetricsCollector: SystemMetricsProvider {
             "coreCount": .number(Double(perCore.count)),
             "history": cpuHistory.json,
         ]
+        lastCPU = reading
+        return reading
     }
 
     // MARK: Memory

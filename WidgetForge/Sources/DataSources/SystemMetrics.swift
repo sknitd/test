@@ -342,7 +342,7 @@ final class SystemMetricsCollector: SystemMetricsProvider {
         #endif
         return [
             "uptimeSeconds": .number(SystemMetricsCollector.uptime()),
-            "hostname": .string(info.hostName),
+            "hostname": .string(SystemMetricsCollector.hostname()),
             "osVersion": .string("macOS \(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"),
             "architecture": .string(architecture),
             "model": .string(SystemMetricsCollector.sysctlString("hw.model") ?? ""),
@@ -353,6 +353,16 @@ final class SystemMetricsCollector: SystemMetricsProvider {
             "thermalState": .string(["nominal", "fair", "serious", "critical"][min(3, max(0, info.thermalState.rawValue))]),
             "lowPowerMode": .bool(info.isLowPowerModeEnabled),
         ]
+    }
+
+    /// The local host name from the kernel. `ProcessInfo.hostName` is deliberately avoided: it performs a
+    /// network name lookup, which can block for seconds and makes macOS show the "find devices on local
+    /// networks" permission prompt.
+    static func hostname() -> String {
+        var buffer = [CChar](repeating: 0, count: 256)
+        guard gethostname(&buffer, buffer.count - 1) == 0 else { return "" }
+        let name = String(cString: buffer)
+        return name.hasSuffix(".local") ? String(name.dropLast(6)) : name
     }
 
     /// Wall-clock time since boot (includes sleep), from `kern.boottime`.

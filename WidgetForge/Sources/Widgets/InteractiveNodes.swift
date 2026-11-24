@@ -122,6 +122,7 @@ struct InputNode: View {
                     TextEditor(text: $text)
                         .font(.system(size: size))
                         .scrollContentBackground(.hidden)
+                        .scrollIndicators(.never)
                 }
             } else {
                 TextField(env.text(node, "placeholder"), text: $text)

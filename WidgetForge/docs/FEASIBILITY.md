@@ -75,7 +75,26 @@ a time limit, and the product does not claim OS-level isolation it does not have
 | Clipboard | `NSPasteboard` needs no entitlement; newer macOS releases may alert the user about programmatic reads. WidgetForge reads only on an explicit click. **[Doc]** |
 | Signing | Ad-hoc signing is enough to run locally. Distribution outside the App Store needs Developer ID signing, the hardened runtime and notarisation. **[Doc]** CI produces ad-hoc builds only. |
 
-## 5. Resulting design
+## 5. What the CI self-test established
+
+Observed on a GitHub-hosted macOS 15.8 virtual Mac (run 45350436518; details and screenshot in `PROGRESS.md`):
+
+- Borderless non-activating panels at `desktopIconWindow + 1` (−2147483602 on that system) are created,
+  report visible and on the active Space, and are drawn above the wallpaper. **[CI]**
+- Raising the same panels to `.floating` for Edit mode and restoring them works. **[CI]**
+- Setting a panel's frame from a stored placement works, including the top-left ↔ bottom-left conversion. **[CI]**
+- The sandboxed, ad-hoc signed app launches, opens its SQLite store, registers its menu bar item and reads
+  CPU, memory, storage, network and system metrics; the CPU figure matched `top`. **[CI]**
+- `JSContextGroupSetExecutionTimeLimit` is exported and stops an infinite loop (unit test on the same OS). **[CI]**
+- `containerURL(forSecurityApplicationGroupIdentifier:)` returned a path for the un-prefixed ad-hoc group id.
+  Whether the widget extension can actually read files there was **not** tested. **[CI]** (partial)
+- `ProcessInfo.hostName` triggers the Local Network privacy prompt on macOS 15. Avoided. **[CI]**
+
+Not established by CI, because nothing there clicks, drags or types: mouse interaction with desktop-level
+panels, behaviour under Show Desktop / Stage Manager / Space switches, and anything about the WidgetKit
+widget beyond "it compiles and is embedded".
+
+## 6. Resulting design
 
 Two backends, one definition format, one renderer:
 

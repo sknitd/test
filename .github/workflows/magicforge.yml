@@ -268,6 +268,15 @@ jobs:
           UNIVERSAL=1 DIST_DIR=dist-universal Scripts/build_app.sh 2>&1 | tee "$ART/build_app-universal-$ID.log"
           lipo -archs dist-universal/MagicForge.app/Contents/MacOS/MagicForge
 
+      - name: Minimum macOS version of the built apps (must be 14.0)
+        id: minos
+        if: ${{ !cancelled() && steps.app.outcome == 'success' }}
+        run: |
+          apps=(dist/MagicForge.app)
+          [ -d dist-xcode/MagicForge.app ] && apps+=(dist-xcode/MagicForge.app)
+          [ -d dist-universal/MagicForge.app ] && apps+=(dist-universal/MagicForge.app)
+          Scripts/check_min_os.sh "${apps[@]}" 2>&1 | tee "$ART/min-os-$ID.txt"
+
       # --- Launch smoke test + idle sample (non-fatal, reported) ------------------------------------
       - name: Launch smoke test and idle measurement
         id: smoke

@@ -409,6 +409,7 @@ final class AppModel: ObservableObject, WidgetRuntimeServices, OverlayHost {
         }
         item("Edit in Builder…") { [weak self] in self?.openInBuilder(widgetID) }
         item("Refresh") { [weak self] in self?.refreshWidget(widgetID) }
+        item("Export Chart Data…") { [weak self] in self?.exportChartData(widgetID) }
         menu.addItem(.separator())
         item("Lock Position", state: widget.locked) { [weak self] in self?.updateWidget(widgetID) { $0.locked.toggle() } }
         item("Pin Above Windows", state: widget.pinned) { [weak self] in self?.updateWidget(widgetID) { $0.pinned.toggle() } }
@@ -459,6 +460,26 @@ final class AppModel: ObservableObject, WidgetRuntimeServices, OverlayHost {
         panel.canCreateDirectories = true
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do { try WidgetPackageCodec.export(definition).write(to: url, options: .atomic) }
+        catch { alertMessage = "Export failed: \(error.localizedDescription)" }
+    }
+
+    /// Save the points currently shown by a widget's charts as CSV.
+    func exportChartData(_ widgetID: String) {
+        guard let runtime = runtimes[widgetID] else { alertMessage = "Show the widget first: chart data is only held while it is live."; return }
+        let env = runtime.environment(interactive: false)
+        let trees = [runtime.instance.definition.root] + (runtime.scriptNode.map { [$0] } ?? [])
+        var sections: [String] = []
+        for node in trees.flatMap(\.flattened) where node.type == .chart {
+            let points = ChartNode.points(from: env.value(node, "values"), node: node)
+            guard !points.isEmpty else { continue }
+            let title = env.text(node, "title")
+            sections.append("# \(title.isEmpty ? "Chart \(sections.count + 1)" : title)\n" + ChartNode.csv(points))
+        }
+        guard !sections.isEmpty else { alertMessage = "This widget has no chart data to export yet."; return }
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "\(runtime.instance.name) data.csv"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do { try sections.joined(separator: "\n\n").write(to: url, atomically: true, encoding: .utf8) }
         catch { alertMessage = "Export failed: \(error.localizedDescription)" }
     }
 

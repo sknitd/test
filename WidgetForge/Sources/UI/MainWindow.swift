@@ -371,6 +371,7 @@ struct MyWidgetsView: View {
                         Button("Duplicate") { model.duplicateWidget(widget.id) }
                         Button("Save to Library") { model.saveToLibrary(widget.definition) }
                         Button("Export…") { model.exportWidget(widget.definition) }
+                        Button("Export Chart Data…") { model.exportChartData(widget.id) }
                         Divider()
                         Button("Delete", role: .destructive) { model.deleteWidget(widget.id) }
                     }

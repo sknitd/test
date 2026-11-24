@@ -100,7 +100,7 @@ final class AppModel: ObservableObject, WidgetRuntimeServices, OverlayHost {
         storageNote = note
     }
 
-    static func describe(_ outcome: AutomationRunRecord.Outcome) -> String {
+    nonisolated static func describe(_ outcome: AutomationRunRecord.Outcome) -> String {
         switch outcome {
         case .completed: return "completed"
         case .cancelled: return "cancelled"

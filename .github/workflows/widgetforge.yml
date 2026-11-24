@@ -85,7 +85,6 @@ jobs:
             echo "::group::Errors"
             grep -E "error:|error :|BUILD FAILED|The following build commands failed" build/xcodebuild.log | sed -E "s#$PWD/##" | sort -u | head -n 150
             echo "::endgroup::"
-            tail -n 25 build/xcodebuild.log
             exit 1
           }
           grep -E "warning:" build/xcodebuild.log | sed -E "s#$PWD/##" | sort -u | head -n 40 || true

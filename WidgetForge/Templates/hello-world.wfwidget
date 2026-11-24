@@ -1,0 +1,22 @@
+{
+  "format": "widgetforge.widget",
+  "version": 1,
+  "definition": {
+    "name": "Hello World",
+    "summary": "The smallest useful widget: a greeting, the time and a counter button.",
+    "category": "Examples",
+    "symbol": "hand.wave",
+    "size": { "width": 240, "height": 150 },
+    "initialState": { "count": 0 },
+    "root": {
+      "type": "column",
+      "spacing": 8,
+      "children": [
+        { "type": "text", "value": "Hello, desktop!", "fontSize": 16, "fontWeight": "semibold" },
+        { "type": "clock", "format": "HH:mm:ss", "fontSize": 26, "fontDesign": "rounded" },
+        { "type": "text", "value": "Pressed {{state.count}} times", "fontSize": 12, "color": "secondary" },
+        { "type": "button", "title": "Press me", "symbol": "plus", "action": { "type": "incrementState", "key": "count", "by": 1 } }
+      ]
+    }
+  }
+}

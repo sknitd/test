@@ -204,3 +204,17 @@ final class TemplateTests: XCTestCase {
         }
     }
 }
+
+final class ExampleFilesTests: XCTestCase {
+    func testShippedExampleWidgetFilesImportCleanly() throws {
+        let folder = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Templates")
+        let files = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil).filter { $0.pathExtension == WidgetPackage.fileExtension }
+        XCTAssertGreaterThanOrEqual(files.count, 2)
+        for file in files {
+            let imported = try WidgetPackageCodec.importPackage(try Data(contentsOf: file))
+            XCTAssertTrue(imported.report.isValid, file.lastPathComponent)
+            let missing = PermissionChecker.missing(required: PermissionChecker.required(for: imported.definition), granted: imported.requestedPermissions)
+            XCTAssertTrue(missing.isEmpty, "\(file.lastPathComponent) under-declares: \(missing.descriptions)")
+        }
+    }
+}

@@ -1,0 +1,502 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5CA69FBC69DD78F99D8C1A0C /* WidgetForgeWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E6CF2423254887BF31FB1A5B /* WidgetForgeWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		18CC47A42830354D47AFB835 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9DD9C64CD18BF50B135F2B93 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ABE3C47DF562AE40BADC4326;
+			remoteInfo = WidgetForgeWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		6070622834BF4FA7BFF4E4CC /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				5CA69FBC69DD78F99D8C1A0C /* WidgetForgeWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		3CF505C3BC01C016D1D6300A /* WidgetForge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WidgetForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E6CF2423254887BF31FB1A5B /* WidgetForgeWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WidgetForgeWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		417F02BAB0667D18BF034956 /* App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = App;
+			sourceTree = "<group>";
+		};
+		C9E3F64921BF435905EEF3D6 /* Automation */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Automation;
+			sourceTree = "<group>";
+		};
+		2CFF6CA2B6BDB9CECA307944 /* Builder */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Builder;
+			sourceTree = "<group>";
+		};
+		8472971052AE6EC408DBB3B1 /* Core */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Core;
+			sourceTree = "<group>";
+		};
+		A86AB8B1CBA075E5409E6385 /* DataSources */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DataSources;
+			sourceTree = "<group>";
+		};
+		207BDE9D0FE547EACA783288 /* Desktop */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Desktop;
+			sourceTree = "<group>";
+		};
+		96A2033814223790D4237F46 /* Diagnostics */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Diagnostics;
+			sourceTree = "<group>";
+		};
+		F79549F1D04657D2C7462883 /* Persistence */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		F2ECD8798EB1D790EC9957A5 /* Profiles */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Profiles;
+			sourceTree = "<group>";
+		};
+		2F38FA7A3D6D7EDE0845463A /* Scripting */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Scripting;
+			sourceTree = "<group>";
+		};
+		CAC71B9BFB6126A6F11586C6 /* Security */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Security;
+			sourceTree = "<group>";
+		};
+		67F771BC9A3B7E711E1EA2E3 /* UI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = UI;
+			sourceTree = "<group>";
+		};
+		FFEF1E48E3F4413EBEF6B962 /* Widgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Widgets;
+			sourceTree = "<group>";
+		};
+		269281EF2A679450B871DB80 /* Resources */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		CFE0D06A41ED0DE35F6D47F4 /* WidgetExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = WidgetExtension;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D7A8CA3AC7B3270AB2F82C6A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		268C2E026A6158869D4FFC74 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B8F54B9097C14D5B32C7BC86 = {
+			isa = PBXGroup;
+			children = (
+				0D0C3E9DD7AAAEE12FD8FD53 /* Sources */,
+				CFE0D06A41ED0DE35F6D47F4 /* WidgetExtension */,
+				269281EF2A679450B871DB80 /* Resources */,
+				356B2CD8389BD14DE32DCE46 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		0D0C3E9DD7AAAEE12FD8FD53 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				417F02BAB0667D18BF034956 /* App */,
+				207BDE9D0FE547EACA783288 /* Desktop */,
+				67F771BC9A3B7E711E1EA2E3 /* UI */,
+				2CFF6CA2B6BDB9CECA307944 /* Builder */,
+				8472971052AE6EC408DBB3B1 /* Core */,
+				F79549F1D04657D2C7462883 /* Persistence */,
+				A86AB8B1CBA075E5409E6385 /* DataSources */,
+				CAC71B9BFB6126A6F11586C6 /* Security */,
+				2F38FA7A3D6D7EDE0845463A /* Scripting */,
+				C9E3F64921BF435905EEF3D6 /* Automation */,
+				F2ECD8798EB1D790EC9957A5 /* Profiles */,
+				96A2033814223790D4237F46 /* Diagnostics */,
+				FFEF1E48E3F4413EBEF6B962 /* Widgets */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		356B2CD8389BD14DE32DCE46 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3CF505C3BC01C016D1D6300A /* WidgetForge.app */,
+				E6CF2423254887BF31FB1A5B /* WidgetForgeWidgets.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CCC3D81A47694C733FC6BD06 /* WidgetForge */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5D70D110A4ADC965E804AA76 /* Build configuration list for PBXNativeTarget "WidgetForge" */;
+			buildPhases = (
+				1A7B5F8B8D2234A09F820A97 /* Sources */,
+				D7A8CA3AC7B3270AB2F82C6A /* Frameworks */,
+				78B00E71B261E4D9552FD028 /* Resources */,
+				6070622834BF4FA7BFF4E4CC /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9312E94A4787BD52791F09D4 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				417F02BAB0667D18BF034956 /* App */,
+				207BDE9D0FE547EACA783288 /* Desktop */,
+				67F771BC9A3B7E711E1EA2E3 /* UI */,
+				2CFF6CA2B6BDB9CECA307944 /* Builder */,
+				8472971052AE6EC408DBB3B1 /* Core */,
+				F79549F1D04657D2C7462883 /* Persistence */,
+				A86AB8B1CBA075E5409E6385 /* DataSources */,
+				CAC71B9BFB6126A6F11586C6 /* Security */,
+				2F38FA7A3D6D7EDE0845463A /* Scripting */,
+				C9E3F64921BF435905EEF3D6 /* Automation */,
+				F2ECD8798EB1D790EC9957A5 /* Profiles */,
+				96A2033814223790D4237F46 /* Diagnostics */,
+				FFEF1E48E3F4413EBEF6B962 /* Widgets */,
+				269281EF2A679450B871DB80 /* Resources */,
+			);
+			name = WidgetForge;
+			packageProductDependencies = (
+			);
+			productName = WidgetForge;
+			productReference = 3CF505C3BC01C016D1D6300A /* WidgetForge.app */;
+			productType = "com.apple.product-type.application";
+		};
+		ABE3C47DF562AE40BADC4326 /* WidgetForgeWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 12B2DA2205A599B5A8C46F4F /* Build configuration list for PBXNativeTarget "WidgetForgeWidgets" */;
+			buildPhases = (
+				8500B5D84FC0C7648960774A /* Sources */,
+				268C2E026A6158869D4FFC74 /* Frameworks */,
+				70147CFD1C686DD3AAD8A634 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				8472971052AE6EC408DBB3B1 /* Core */,
+				F79549F1D04657D2C7462883 /* Persistence */,
+				A86AB8B1CBA075E5409E6385 /* DataSources */,
+				CAC71B9BFB6126A6F11586C6 /* Security */,
+				2F38FA7A3D6D7EDE0845463A /* Scripting */,
+				C9E3F64921BF435905EEF3D6 /* Automation */,
+				F2ECD8798EB1D790EC9957A5 /* Profiles */,
+				96A2033814223790D4237F46 /* Diagnostics */,
+				FFEF1E48E3F4413EBEF6B962 /* Widgets */,
+				CFE0D06A41ED0DE35F6D47F4 /* WidgetExtension */,
+			);
+			name = WidgetForgeWidgets;
+			packageProductDependencies = (
+			);
+			productName = WidgetForgeWidgets;
+			productReference = E6CF2423254887BF31FB1A5B /* WidgetForgeWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9DD9C64CD18BF50B135F2B93 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					CCC3D81A47694C733FC6BD06 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					ABE3C47DF562AE40BADC4326 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = A7A5F7F5A6DB6F8916DD1C3A /* Build configuration list for PBXProject "WidgetForge" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B8F54B9097C14D5B32C7BC86;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 356B2CD8389BD14DE32DCE46 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CCC3D81A47694C733FC6BD06 /* WidgetForge */,
+				ABE3C47DF562AE40BADC4326 /* WidgetForgeWidgets */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		78B00E71B261E4D9552FD028 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		70147CFD1C686DD3AAD8A634 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1A7B5F8B8D2234A09F820A97 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8500B5D84FC0C7648960774A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9312E94A4787BD52791F09D4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = ABE3C47DF562AE40BADC4326 /* WidgetForgeWidgets */;
+			targetProxy = 18CC47A42830354D47AFB835 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		D1C5AB9E8AE1CFE16EA86AD8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				WF_APP_GROUP = "$(TeamIdentifierPrefix)com.widgetforge.shared";
+			};
+			name = Debug;
+		};
+		492C639B230DE5681776EA02 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				WF_APP_GROUP = "$(TeamIdentifierPrefix)com.widgetforge.shared";
+			};
+			name = Release;
+		};
+		0A771F5914D097DFA1300EF2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/WidgetForge.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/App-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = WidgetForge;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.widgetforge.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		F4CB269A5719115E6C2C1CF3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/WidgetForge.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/App-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = WidgetForge;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.widgetforge.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		47E732B64AF26B9ED2819512 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/WidgetForgeWidgets.entitlements;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Widgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = WidgetForge;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.widgetforge.app.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		1CAFAFCC2EB80DD44476D0AE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/WidgetForgeWidgets.entitlements;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Widgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = WidgetForge;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.widgetforge.app.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A7A5F7F5A6DB6F8916DD1C3A /* Build configuration list for PBXProject "WidgetForge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D1C5AB9E8AE1CFE16EA86AD8 /* Debug */,
+				492C639B230DE5681776EA02 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5D70D110A4ADC965E804AA76 /* Build configuration list for PBXNativeTarget "WidgetForge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0A771F5914D097DFA1300EF2 /* Debug */,
+				F4CB269A5719115E6C2C1CF3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		12B2DA2205A599B5A8C46F4F /* Build configuration list for PBXNativeTarget "WidgetForgeWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				47E732B64AF26B9ED2819512 /* Debug */,
+				1CAFAFCC2EB80DD44476D0AE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 9DD9C64CD18BF50B135F2B93 /* Project object */;
+}

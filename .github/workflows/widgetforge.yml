@@ -57,3 +57,62 @@ jobs:
         run: |
           set -o pipefail
           swift test 2>&1 | grep -vE "^Test Case .* (started|passed)" | tail -n 200
+
+  app:
+    name: Build app, self-test, package
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: WidgetForge
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          sw_vers
+          xcodebuild -version
+      - name: Project file is up to date
+        run: |
+          python3 Scripts/generate_xcodeproj.py
+          git diff --exit-code -- WidgetForge.xcodeproj
+          plutil -lint WidgetForge.xcodeproj/project.pbxproj Config/*.plist Config/*.entitlements
+      - name: Build (Release, universal, ad-hoc signed)
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build
+          Scripts/build_app.sh Release > build/xcodebuild.log 2>&1 || {
+            echo "::group::Errors"
+            grep -E "error:|error :|BUILD FAILED|The following build commands failed" build/xcodebuild.log | sed -E "s#$PWD/##" | sort -u | head -n 150
+            echo "::endgroup::"
+            tail -n 25 build/xcodebuild.log
+            exit 1
+          }
+          grep -E "warning:" build/xcodebuild.log | sed -E "s#$PWD/##" | sort -u | head -n 40 || true
+          tail -n 6 build/xcodebuild.log
+      - name: Inspect bundle
+        run: |
+          ls build/WidgetForge.app/Contents build/WidgetForge.app/Contents/PlugIns
+          codesign -d --entitlements - build/WidgetForge.app 2>&1 | head -n 40
+          du -sh build/WidgetForge.app
+      - name: Self-test (launches the real app and measures it)
+        shell: bash
+        run: |
+          set -o pipefail
+          ( sleep 19; screencapture -x build/desktop.png || true ) &
+          build/WidgetForge.app/Contents/MacOS/WidgetForge --self-test --hold 6 2>build/selftest.err | tee build/selftest.txt | head -n 200
+          wait || true
+          grep -q WIDGETFORGE_SELFTEST_END build/selftest.txt
+          tail -n 20 build/selftest.err || true
+      - name: Package DMG
+        run: Scripts/make_dmg.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: WidgetForge
+          path: |
+            WidgetForge/build/WidgetForge.dmg
+            WidgetForge/build/desktop.png
+            WidgetForge/build/selftest.txt
+            WidgetForge/build/xcodebuild.log
+          if-no-files-found: warn

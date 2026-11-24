@@ -1,0 +1,14 @@
+{
+  "format": "widgetforge.widget",
+  "version": 1,
+  "definition": {
+    "name": "Uptime (scripted)",
+    "summary": "A scripted widget: reads system info through the SDK and keeps a run counter in storage.",
+    "category": "Examples",
+    "symbol": "clock.arrow.circlepath",
+    "size": { "width": 260, "height": 130 },
+    "permissions": { "systemMetrics": true, "scripting": true },
+    "root": { "type": "script" },
+    "script": "WidgetForge.defineWidget({\n  id: \"uptime\",\n  name: \"Uptime\",\n  interval: 5,\n  async update(context, state) {\n    const info = await context.system.info();\n    const runs = (context.storage.get(\"runs\") || 0) + 1;\n    context.storage.set(\"runs\", runs);\n    return { uptime: info ? info.uptimeSeconds : null, host: info ? info.hostname : \"\", runs };\n  },\n  render(state) {\n    const h = state.uptime == null ? \"–\" : Math.floor(state.uptime / 3600) + \"h \" + Math.floor((state.uptime % 3600) / 60) + \"m\";\n    return { type: \"column\", spacing: 6, children: [\n      { type: \"text\", value: state.host || \"This Mac\", fontSize: 12, color: \"secondary\" },\n      { type: \"text\", value: \"Up \" + h, fontSize: 24, fontWeight: \"semibold\", fontDesign: \"rounded\" },\n      { type: \"text\", value: \"Script has run \" + state.runs + \" times\", fontSize: 11, color: \"secondary\" }\n    ] };\n  }\n});\n"
+  }
+}

@@ -89,6 +89,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { AppDelegate.showMainWindow() }
         }
         if CommandLine.arguments.contains("--self-test") { SelfTest.run(model: model) }
+        if CommandLine.arguments.contains("--ui-snapshots") { UISnapshots.run(model: model) }
     }
 
     static func showMainWindow() {

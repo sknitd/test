@@ -106,6 +106,14 @@ jobs:
           grep -q WIDGETFORGE_SELFTEST_END build/selftest.txt
           tail -n 20 build/selftest.err || true
           echo "--- top (same period) ---"; cat build/top.txt || true
+      - name: UI snapshots (renders every template and screen, drives Edit-mode drag)
+        shell: bash
+        run: |
+          set -o pipefail
+          build/WidgetForge.app/Contents/MacOS/WidgetForge --ui-snapshots 2>build/snapshots.err | tee build/snapshots.txt | grep -v "^Charts:" | head -n 200
+          grep -q WIDGETFORGE_SNAPSHOTS_END build/snapshots.txt
+          DIR="$(grep '^WIDGETFORGE_SNAPSHOTS_DIR=' build/snapshots.txt | cut -d= -f2-)"
+          mkdir -p build/snapshots && cp "$DIR"/*.png build/snapshots/ && ls build/snapshots | wc -l
       - name: Package DMG
         run: Scripts/make_dmg.sh
       - uses: actions/upload-artifact@v4
@@ -116,5 +124,7 @@ jobs:
             WidgetForge/build/WidgetForge.dmg
             WidgetForge/build/desktop.png
             WidgetForge/build/selftest.txt
+            WidgetForge/build/snapshots.txt
+            WidgetForge/build/snapshots
             WidgetForge/build/xcodebuild.log
           if-no-files-found: warn

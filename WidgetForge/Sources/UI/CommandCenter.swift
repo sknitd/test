@@ -33,6 +33,7 @@ final class CommandCenterController {
     }
 
     func close() { panel?.orderOut(nil) }
+    var panelContentView: NSView? { panel?.contentView }
 
     private func makePanel() -> CommandPanel {
         let panel = CommandPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel, .fullSizeContentView], backing: .buffered, defer: false)

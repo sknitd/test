@@ -192,7 +192,8 @@ final class WidgetContainerView: NSView {
     let widgetID: String
     private weak var host: OverlayHost?
     private let hosting: NSHostingView<WidgetHostView>
-    private let editOverlay: EditOverlayView
+    /// Internal (not private) so the automated UI check can drive it with synthesized events.
+    let editOverlay: EditOverlayView
     var isDragging: Bool { editOverlay.isDragging }
 
     init(widgetID: String, host: OverlayHost, runtime: WidgetRuntime) {
@@ -331,6 +332,12 @@ final class EditOverlayView: NSView {
 
     // MARK: Mouse
 
+    /// Pointer position in screen coordinates, taken from the event itself (not the live cursor) so that
+    /// queued and synthesized events are handled identically.
+    private func screenLocation(of event: NSEvent) -> NSPoint {
+        window?.convertPoint(toScreen: event.locationInWindow) ?? NSEvent.mouseLocation
+    }
+
     override func mouseDown(with event: NSEvent) {
         guard !isLocked, let host, let widget = host.store.widget(widgetID),
               let rect = LayoutEngine.globalRect(for: widget.placement, in: ScreenGeometry.displays()) else { return }
@@ -339,14 +346,14 @@ final class EditOverlayView: NSView {
             return
         }
         isDragging = true
-        dragStartMouse = NSEvent.mouseLocation
+        dragStartMouse = screenLocation(of: event)
         dragStartRect = rect
         activeHandle = handle(at: convert(event.locationInWindow, from: nil))
     }
 
     override func mouseDragged(with event: NSEvent) {
         guard isDragging, let host, let window else { return }
-        let mouse = NSEvent.mouseLocation
+        let mouse = screenLocation(of: event)
         let dx = Double(mouse.x - dragStartMouse.x)
         let dy = Double(dragStartMouse.y - mouse.y)            // screen y grows upward; layout y grows downward
         var rect: Rect

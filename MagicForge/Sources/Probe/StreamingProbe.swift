@@ -19,6 +19,7 @@ enum StreamingProbe {
     static func run(mode: Mode, duration: TimeInterval, allDevices: Bool, invertY: Bool) -> Int32 {
         let adapter = MultitouchSupportAdapter()
         adapter.includeAllDevicesForDiagnostics = allDevices
+        adapter.magicMousePresentHint = { !HIDDeviceMonitor.snapshot().isEmpty }
         adapter.invertY = invertY
         if case .unavailable(let reason) = adapter.checkAvailability() {
             print("Touch input is unavailable: \(reason)")

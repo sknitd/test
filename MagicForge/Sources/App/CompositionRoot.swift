@@ -72,6 +72,9 @@ final class CompositionRoot {
         // probe, `assumeContinuousScrollIsMagicMouse` (default false) decides instead.
         pointerSource.magicMouseActivityProbe = CompositionRoot.makeActivityProbe(multitouchAdapter.activity)
         let deviceMonitor = HIDDeviceMonitor()
+        // WIRING: lets the adapter stream a multitouch device its classifier does not recognize
+        // when a Magic Mouse is known to be connected over HID.
+        multitouchAdapter.magicMousePresentHint = { !HIDDeviceMonitor.snapshot().isEmpty }
 
         // --- System services -----------------------------------------------------------
         let permissions = SystemPermissions()

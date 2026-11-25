@@ -76,6 +76,11 @@ public final class MultitouchSupportAdapter: TouchInputAdapter, @unchecked Senda
 
     deinit { stop() }
 
+    /// Reports whether a Magic Mouse is currently connected according to another source (the
+    /// HID device monitor). Enables the selection fallback for devices the classifier does not
+    /// recognize. May be called on any thread. Set before `start`.
+    public var magicMousePresentHint: (() -> Bool)?
+
     /// Diagnostics only (`mfprobe --all-devices`): also stream trackpads. Set before `start`.
     public var includeAllDevicesForDiagnostics: Bool {
         get { stateLock.lock(); defer { stateLock.unlock() }; return includeAllDevices }
@@ -105,10 +110,15 @@ public final class MultitouchSupportAdapter: TouchInputAdapter, @unchecked Senda
     public func checkAvailability() -> AdapterAvailability {
         let bridge = MultitouchBridge.shared
         if let reason = bridge.unavailableReason { return .unavailable(reason: reason) }
-        guard let list = bridge.copyDeviceList(), !selectDevices(from: list).isEmpty else {
-            return .unavailable(reason: "No Magic Mouse multitouch device is connected")
+        let list = bridge.copyDeviceList()
+        if let list = list, !selectDevices(from: list).isEmpty { return .available }
+        let hid: String
+        if let hint = magicMousePresentHint {
+            hid = hint() ? " A Magic Mouse is connected (HID)." : " No Magic Mouse is connected (HID)."
+        } else {
+            hid = ""
         }
-        return .available
+        return .unavailable(reason: "No Magic Mouse multitouch device was found." + hid + " " + deviceSummary(of: list))
     }
 
     public func start(onFrame: @escaping (TouchFrame) -> Void) throws {
@@ -163,14 +173,43 @@ public final class MultitouchSupportAdapter: TouchInputAdapter, @unchecked Senda
 
     private func selectDevices(from list: MultitouchDeviceList) -> [(ref: MTDeviceRef, description: MultitouchDeviceDescription)] {
         let includeAll: Bool = includeAllDevicesForDiagnostics
-        var result: [(ref: MTDeviceRef, description: MultitouchDeviceDescription)] = []
+        var described: [(ref: MTDeviceRef, description: MultitouchDeviceDescription)] = []
         for (index, ref) in list.refs.enumerated() {
-            let description = MultitouchBridge.shared.describe(ref, index: index)
-            if includeAll || description.deviceClass == .magicMouse {
-                result.append((ref: ref, description: description))
-            }
+            described.append((ref: ref, description: MultitouchBridge.shared.describe(ref, index: index)))
         }
-        return result
+        if includeAll { return described }
+        let recognized = described.filter { $0.description.deviceClass == .magicMouse }
+        if !recognized.isEmpty { return recognized }
+        // Fallback: the family ids and sensor dimensions the classifier relies on are community
+        // observations and differ between models and macOS releases. When the classifier
+        // recognizes nothing but a Magic Mouse is known to be connected (HID), stream every
+        // device that is neither built in nor a known external trackpad family.
+        guard magicMousePresentHint?() ?? false else { return [] }
+        return described.filter { entry in
+            if entry.description.isBuiltIn == true { return false }
+            if let family = entry.description.familyID,
+               MultitouchDeviceClassifier.externalTrackpadFamilyIDs.contains(family) { return false }
+            return true
+        }
+    }
+
+    /// One line per multitouch device the framework reports, for the "unavailable" explanation.
+    private func deviceSummary(of list: MultitouchDeviceList?) -> String {
+        guard let list = list, !list.refs.isEmpty else { return "The system reports no multitouch devices." }
+        var parts: [String] = []
+        for (index, ref) in list.refs.enumerated() {
+            let d = MultitouchBridge.shared.describe(ref, index: index)
+            let family = d.familyID.map { String($0) } ?? "?"
+            let size: String
+            if let w = d.surfaceWidthMM, let h = d.surfaceHeightMM {
+                size = String(format: "%.1f×%.1f mm", w, h)
+            } else {
+                size = "size ?"
+            }
+            let builtIn = d.isBuiltIn.map { $0 ? "built-in" : "external" } ?? "built-in ?"
+            parts.append("#\(index): family \(family), \(size), \(builtIn), classified \(d.deviceClass.rawValue)")
+        }
+        return "Multitouch devices seen: " + parts.joined(separator: "; ") + "."
     }
 
     private func attach(_ selected: [(ref: MTDeviceRef, description: MultitouchDeviceDescription)],
@@ -181,7 +220,7 @@ public final class MultitouchSupportAdapter: TouchInputAdapter, @unchecked Senda
         for entry in selected {
             let stream = Stream(description: entry.description,
                                 frameDeviceID: entry.description.deviceID ?? UInt64(entry.description.index + 1),
-                                isMagicMouse: entry.description.deviceClass == .magicMouse)
+                                isMagicMouse: entry.description.deviceClass == .magicMouse || !includeAllDevicesForDiagnostics)
             stateLock.lock(); streams[entry.ref] = stream; stateLock.unlock()
             let box = WeakAdapterBox(self)
             streamRegistry.withLock { table in table[entry.ref] = box }

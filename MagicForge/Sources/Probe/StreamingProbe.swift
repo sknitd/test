@@ -1,5 +1,6 @@
 import Foundation
 import MFCore
+import MFDevices
 import MFGestures
 import MFInput
 import MFUtilities

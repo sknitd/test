@@ -411,6 +411,15 @@ final class AppModel: ObservableObject, WidgetRuntimeServices, OverlayHost {
         item("Refresh") { [weak self] in self?.refreshWidget(widgetID) }
         item("Export Chart Data…") { [weak self] in self?.exportChartData(widgetID) }
         menu.addItem(.separator())
+        let themes = NSMenu()
+        for theme in WidgetTheme.all {
+            let entry = ClosureMenuItem(title: theme.name) { [weak self] in self?.applyTheme(theme, to: [widgetID]) }
+            entry.state = WidgetTheme.matching(widget)?.id == theme.id ? .on : .off
+            themes.addItem(entry)
+        }
+        let themeItem = NSMenuItem(title: "Theme", action: nil, keyEquivalent: "")
+        themeItem.submenu = themes
+        menu.addItem(themeItem)
         item("Lock Position", state: widget.locked) { [weak self] in self?.updateWidget(widgetID) { $0.locked.toggle() } }
         item("Pin Above Windows", state: widget.pinned) { [weak self] in self?.updateWidget(widgetID) { $0.pinned.toggle() } }
         item("Click-Through", state: widget.clickThrough) { [weak self] in self?.updateWidget(widgetID) { $0.clickThrough.toggle() } }
@@ -502,6 +511,121 @@ final class AppModel: ObservableObject, WidgetRuntimeServices, OverlayHost {
         } catch {
             alertMessage = "Import failed: \(error.localizedDescription)"
             diagnostics.log(.warning, .security, "Rejected import: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: Themes and tidy-up
+
+    func applyTheme(_ theme: WidgetTheme, to ids: [String]) {
+        store.applyTheme(theme, to: ids)
+        diagnostics.log(.info, .layout, "Applied the \(theme.name) theme to \(ids.count) widget(s)")
+    }
+
+    func tidyWidgets(_ mode: TileMode) {
+        store.tidy(mode, displays: ScreenGeometry.displays())
+        diagnostics.log(.info, .layout, "Tidied widgets: \(mode.title)")
+    }
+
+    // MARK: Backup and restore
+
+    func makeBackup() -> BackupArchive {
+        profileManager.captureActiveLayout()
+        return BackupArchive(createdAt: Date(), widgets: store.widgets, layouts: store.layouts, profiles: profileManager.profiles,
+                             activeProfileID: profileManager.state.activeID, rules: rules, library: library,
+                             settings: try? JSONValue.encode(settings))
+    }
+
+    func exportBackup() {
+        let panel = NSSavePanel()
+        let stamp = Date().formatted(.iso8601.year().month().day())
+        panel.nameFieldStringValue = "WidgetForge \(stamp).\(BackupArchive.fileExtension)"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try BackupCodec.encode(makeBackup()).write(to: url, options: .atomic)
+            diagnostics.log(.info, .app, "Backup written to \(url.lastPathComponent)")
+        } catch { alertMessage = "Backup failed: \(error.localizedDescription)" }
+    }
+
+    func chooseBackupToRestore() {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.message = "Choose a WidgetForge backup (.\(BackupArchive.fileExtension))"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let archive = try BackupCodec.decode(try Data(contentsOf: url))
+            let alert = NSAlert()
+            alert.messageText = "Replace your current setup with this backup?"
+            alert.informativeText = "The backup from \(archive.createdAt.formatted(date: .abbreviated, time: .shortened)) contains \(archive.widgets.count) widget(s), \(archive.profiles.count) profile(s) and \(archive.rules.count) automation(s). Your current widgets, profiles, automations and library will be replaced. Scripts in restored widgets stay off until you trust them again; secrets and file choices are not part of a backup."
+            alert.addButton(withTitle: "Replace")
+            alert.addButton(withTitle: "Cancel")
+            guard alert.runModal() == .alertFirstButtonReturn else { return }
+            restore(archive)
+        } catch { alertMessage = "Could not restore: \(error.localizedDescription)" }
+    }
+
+    /// Replace the whole setup with a validated archive.
+    func restore(_ archive: BackupArchive) {
+        runtimes.values.forEach { $0.stop() }
+        runtimes.removeAll()
+        store.replaceAll(widgets: archive.widgets, layouts: archive.layouts)
+        profileManager.replaceAll(archive.profiles, activeID: archive.activeProfileID)
+        rules = archive.rules
+        Task { await automation.setRules(archive.rules) }
+        for item in library { try? db.delete(Collections.library, id: item.id) }
+        library = archive.library.sorted { $0.name < $1.name }
+        for item in library { try? db.save(item, in: Collections.library, id: item.id) }
+        if let restored = try? archive.settings?.decode(AppSettings.self) { settings = restored }
+        storeChanged()
+        diagnostics.log(.info, .app, "Restored backup with \(archive.widgets.count) widget(s)")
+    }
+
+    // MARK: URL scheme and Shortcuts
+
+    /// Carry out a `widgetforge://` command. Returns a short description of what happened.
+    @discardableResult
+    func perform(_ command: DeepLinkCommand, confirmed: Bool = false) -> String {
+        if command.needsConfirmation, !confirmed {
+            let alert = NSAlert()
+            alert.messageText = "Allow this request?"
+            switch command {
+            case .addTemplate(let name): alert.informativeText = "A link asked WidgetForge to add the “\(name)” widget to your desktop."
+            case .runAutomation(let name): alert.informativeText = "A link asked WidgetForge to run the automation “\(name)”."
+            default: break
+            }
+            alert.addButton(withTitle: "Allow")
+            alert.addButton(withTitle: "Cancel")
+            guard alert.runModal() == .alertFirstButtonReturn else { return "Cancelled" }
+        }
+        switch command {
+        case .showWidgets: setWidgetsVisible(true); return "Widgets shown"
+        case .hideWidgets: setWidgetsVisible(false); return "Widgets hidden"
+        case .toggleWidgets: setWidgetsVisible(!widgetsVisible); return widgetsVisible ? "Widgets shown" : "Widgets hidden"
+        case .editMode(let on): setEditMode(on); return on ? "Edit mode on" : "Edit mode off"
+        case .pauseUpdates(let paused): setUpdatesPaused(paused); return paused ? "Updates paused" : "Updates resumed"
+        case .profile(let key):
+            guard let key else { activateProfile(nil); return "Showing all widgets" }
+            guard let profile = profiles.first(where: { $0.id == key || $0.name.caseInsensitiveCompare(key) == .orderedSame }) else { return "No profile named \(key)" }
+            activateProfile(profile.id)
+            return "Switched to \(profile.name)"
+        case .theme(let key):
+            guard let theme = WidgetTheme.named(key) else { return "No theme named \(key)" }
+            applyTheme(theme, to: widgets.map(\.id))
+            return "Applied \(theme.name)"
+        case .tidy(let mode): tidyWidgets(mode); return mode.title
+        case .open(let name):
+            guard let target = AppSection.allCases.first(where: { $0.rawValue.lowercased() == name || $0.title.lowercased() == name }) else { return "No section named \(name)" }
+            section = target
+            AppDelegate.showMainWindow()
+            return "Opened \(target.title)"
+        case .commandCenter: CommandCenterController.shared.show(); return "Command Center"
+        case .runAutomation(let key):
+            guard let rule = rules.first(where: { $0.id == key || $0.name.caseInsensitiveCompare(key) == .orderedSame }) else { return "No automation named \(key)" }
+            runRule(rule.id)
+            return "Ran \(rule.name)"
+        case .addTemplate(let name):
+            guard let template = TemplateLibrary.all.first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) else { return "No template named \(name)" }
+            addWidget(template)
+            return "Added \(template.name)"
         }
     }
 
@@ -605,13 +729,22 @@ final class AppModel: ObservableObject, WidgetRuntimeServices, OverlayHost {
     /// Battery automations need periodic samples even when no battery widget is visible.
     private func updateBatteryWatch() {
         let needed = rules.contains { rule in
-            if rule.enabled, case .batteryBelow = rule.trigger { return true }
-            return false
+            guard rule.enabled else { return false }
+            switch rule.trigger {
+            case .batteryBelow, .metricSustained: return true
+            default: return false
+            }
         }
         if needed { metricsHub.retain("automation.battery") } else { metricsHub.release("automation.battery") }
     }
 
     private func metricsSampled(_ sample: [String: JSONValue]) {
+        if rules.contains(where: { rule in
+            if rule.enabled, case .metricSustained = rule.trigger { return true }
+            return false
+        }) {
+            emit(AutomationEvent(kind: .metricsSampled, context: .object(sample)))
+        }
         guard let battery = sample["battery"], battery["present"]?.boolValue == true, let level = battery["level"]?.doubleValue,
               Date().timeIntervalSince(lastBatteryEvent) >= 30 else { return }
         lastBatteryEvent = Date()

@@ -69,6 +69,14 @@ final class CommandCenterController {
             }
             add("widget.edit.\(widget.id)", "Edit \(widget.name)", "Open in Builder", "hammer") { model.openInBuilder(widget.id) }
         }
+        for mode in TileMode.allCases {
+            add("tidy.\(mode.rawValue)", "Tidy Up: \(mode.title)", "Layout", mode.symbol) { model.tidyWidgets(mode) }
+        }
+        for theme in WidgetTheme.all {
+            add("theme.\(theme.id)", "Apply \(theme.name) Theme to All Widgets", "Theme", theme.symbol) { model.applyTheme(theme, to: model.widgets.map(\.id)) }
+        }
+        add("backup.export", "Back Up WidgetForge…", "Backup", "externaldrive") { model.exportBackup() }
+        add("backup.restore", "Restore from Backup…", "Backup", "externaldrive.badge.timemachine") { model.chooseBackupToRestore() }
         add("profile.none", "Switch to All Widgets", "Profile", "person.crop.rectangle.stack") { model.activateProfile(nil) }
         for profile in model.profiles {
             add("profile.\(profile.id)", "Switch to \(profile.name)", "Profile", profile.symbol) { model.activateProfile(profile.id) }

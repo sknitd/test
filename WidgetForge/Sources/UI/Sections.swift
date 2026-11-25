@@ -129,6 +129,10 @@ struct AutomationsView: View {
                                                   actions: [.showWidget(id: battery), .setWidgetState(widgetID: battery, key: "highlight", value: true),
                                                             .notify(title: "Battery low", body: "Below 20%. Plug in soon.")], cooldown: 600))
                 }
+                Button("Sustained high CPU alert") {
+                    model.saveRule(AutomationRule(name: "High CPU", trigger: .metricSustained(condition: Condition("cpu.usage", .greaterThan, 0.9), seconds: 60),
+                                                  actions: [.notify(title: "CPU has been above 90% for a minute", body: "Check Activity Monitor.")], cooldown: 600))
+                }
                 Button("Refresh everything when the network returns") {
                     model.saveRule(AutomationRule(name: "Network refresh", trigger: .networkChange, conditions: [Condition("network.connected", .equals, true)],
                                                   actions: [.refreshData(widgetID: "")], cooldown: 30))
@@ -235,6 +239,12 @@ struct RuleEditor: View {
         case .dataCondition(let widgetID, let condition):
             WidgetPicker(selection: Binding(get: { widgetID }, set: { v in update { $0.trigger = .dataCondition(widgetID: v, condition: condition) } }), allowsAny: true)
             ConditionFields(condition: Binding(get: { condition }, set: { v in update { $0.trigger = .dataCondition(widgetID: widgetID, condition: v) } }))
+        case .metricSustained(let condition, let seconds):
+            ConditionFields(condition: Binding(get: { condition }, set: { v in update { $0.trigger = .metricSustained(condition: v, seconds: seconds) } }))
+            Text("for")
+            TextField("seconds", value: Binding(get: { seconds }, set: { v in update { $0.trigger = .metricSustained(condition: condition, seconds: max(0, v)) } }), format: .number)
+                .textFieldStyle(.roundedBorder).frame(width: 60)
+            Text("s").font(.caption).foregroundStyle(.secondary)
         case .networkChange, .manual:
             EmptyView()
         }
@@ -257,6 +267,7 @@ extension AutomationTrigger {
         case .batteryBelow: return "Battery falls below"
         case .widgetInteraction: return "Widget interaction"
         case .dataCondition: return "Data condition becomes true"
+        case .metricSustained: return "System metric stays above/below"
         case .manual: return "Manual"
         }
     }
@@ -526,6 +537,20 @@ struct SettingsView: View {
                     }
                     .disabled(aiKey.isEmpty || URL(string: model.settings.ai.endpoint)?.host == nil)
                 }
+            }
+            Card(title: "Backup") {
+                Text("A backup holds your widgets (with their notes and other state), layouts, profiles, automations, library and settings in one file. It never contains secrets or file choices. Restoring replaces your current setup and leaves widget scripts switched off until you trust them again.")
+                    .font(.caption).foregroundStyle(.secondary)
+                HStack {
+                    Button("Back Up…") { model.exportBackup() }
+                    Button("Restore from Backup…") { model.chooseBackupToRestore() }
+                }
+            }
+            Card(title: "Shortcuts and URL Control") {
+                Text("WidgetForge adds actions to the Shortcuts app (Show or Hide Widgets, Switch Profile, Apply Theme, Tidy Up, Run Automation) and accepts these links from scripts and launchers. Links that add a widget or run an automation ask you first.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Text("widgetforge://toggle    widgetforge://profile?name=Work    widgetforge://theme?name=Midnight\nwidgetforge://tidy?edge=left    widgetforge://edit?on=1    widgetforge://pause    widgetforge://resume\nwidgetforge://open?section=diagnostics    widgetforge://run?name=…    widgetforge://add?template=CPU%20Monitor")
+                    .font(.caption.monospaced()).textSelection(.enabled)
             }
             Card(title: "About") {
                 LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")

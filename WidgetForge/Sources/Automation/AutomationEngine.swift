@@ -8,6 +8,8 @@ enum AutomationTrigger: Codable, Hashable, Sendable {
     case batteryBelow(percent: Double)
     case widgetInteraction(name: String)
     case dataCondition(widgetID: String, condition: Condition)
+    /// A system-metric condition (e.g. `cpu.usage > 0.9`) that has held without interruption for `seconds`.
+    case metricSustained(condition: Condition, seconds: Double)
     case manual
 
     var title: String {
@@ -19,6 +21,7 @@ enum AutomationTrigger: Codable, Hashable, Sendable {
         case .batteryBelow(let p): return "When battery falls below \(Int(p))%"
         case .widgetInteraction(let name): return "When a widget sends \"\(name)\""
         case .dataCondition(_, let c): return "When \(c.summary)"
+        case .metricSustained(let c, let s): return "When \(c.summary) for \(Formatters.duration(s))"
         case .manual: return "Manually"
         }
     }
@@ -32,11 +35,12 @@ enum AutomationTrigger: Codable, Hashable, Sendable {
         case .batteryBelow: return "batteryBelow"
         case .widgetInteraction: return "widgetInteraction"
         case .dataCondition: return "dataCondition"
+        case .metricSustained: return "metricSustained"
         case .manual: return "manual"
         }
     }
 
-    static let kinds = ["manual", "timer", "appLaunch", "appActivate", "networkChange", "batteryBelow", "widgetInteraction", "dataCondition"]
+    static let kinds = ["manual", "timer", "appLaunch", "appActivate", "networkChange", "batteryBelow", "widgetInteraction", "dataCondition", "metricSustained"]
 
     static func make(kind: String) -> AutomationTrigger {
         switch kind {
@@ -47,6 +51,7 @@ enum AutomationTrigger: Codable, Hashable, Sendable {
         case "batteryBelow": return .batteryBelow(percent: 20)
         case "widgetInteraction": return .widgetInteraction(name: "pressed")
         case "dataCondition": return .dataCondition(widgetID: "", condition: Condition("value", .greaterThan, 0))
+        case "metricSustained": return .metricSustained(condition: Condition("cpu.usage", .greaterThan, 0.9), seconds: 30)
         default: return .manual
         }
     }
@@ -137,6 +142,8 @@ struct AutomationEvent: Sendable {
         case battery(percent: Double, onBattery: Bool)
         case widgetInteraction(widgetID: String, name: String)
         case dataUpdated(widgetID: String)
+        /// A fresh system-metrics sample; the event context is the sample (`cpu`, `memory`, …).
+        case metricsSampled
         case manual(ruleID: String)
     }
     var kind: Kind
@@ -185,6 +192,8 @@ actor AutomationEngine {
     private var running: [String: Task<Void, Never>] = [:]
     private var edgeState: [String: Bool] = [:]          // rule id -> was the threshold condition true last time
     private var lastTimerFire: [String: Date] = [:]
+    private var sustainedSince: [String: Date] = [:]     // rule id -> when its metric condition became true
+    private var sustainedFired: Set<String> = []
     private(set) var history: [AutomationRunRecord] = []
     private(set) var isPaused = false
 
@@ -216,6 +225,8 @@ actor AutomationEngine {
     func upsert(_ rule: AutomationRule) {
         if let index = rules.firstIndex(where: { $0.id == rule.id }) { rules[index] = rule } else { rules.append(rule) }
         edgeState[rule.id] = nil
+        sustainedSince[rule.id] = nil
+        sustainedFired.remove(rule.id)
         if !rule.enabled { running[rule.id]?.cancel() }
         persist(rules)
     }
@@ -296,6 +307,18 @@ actor AutomationEngine {
         case (.dataCondition(let wantedWidget, let condition), .dataUpdated(let widgetID)):
             guard wantedWidget.isEmpty || wantedWidget == widgetID else { return false }
             return risingEdge(rule.id, isTrue: condition.evaluate(in: event.context))
+        case (.metricSustained(let condition, let seconds), .metricsSampled):
+            guard condition.evaluate(in: event.context) else {
+                // Any sample that breaks the condition resets the clock and re-arms the rule.
+                sustainedSince[rule.id] = nil
+                sustainedFired.remove(rule.id)
+                return false
+            }
+            let since = sustainedSince[rule.id] ?? event.date
+            sustainedSince[rule.id] = since
+            guard event.date.timeIntervalSince(since) >= max(0, seconds), !sustainedFired.contains(rule.id) else { return false }
+            sustainedFired.insert(rule.id)      // fire once per continuous episode
+            return true
         default:
             return false
         }
@@ -370,5 +393,18 @@ actor AutomationEngine {
     /// Waits until no workflow is running (used by tests and by app termination).
     func waitUntilIdle() async {
         while let task = running.values.first { await task.value }
+    }
+}
+
+extension AutomationEngine {
+    /// Whether any enabled rule needs the host to feed it metric samples.
+    var needsMetricSamples: Bool {
+        rules.contains { rule in
+            guard rule.enabled else { return false }
+            switch rule.trigger {
+            case .metricSustained, .batteryBelow: return true
+            default: return false
+            }
+        }
     }
 }

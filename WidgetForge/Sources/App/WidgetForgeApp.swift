@@ -31,6 +31,16 @@ struct WidgetForgeApp: App {
                     .keyboardShortcut("p", modifiers: [.command, .shift])
                 Divider()
                 Button("Snap All to Grid") { model.snapAllToGrid() }
+                Menu("Tidy Up") {
+                    ForEach(TileMode.allCases, id: \.self) { mode in Button(mode.title) { model.tidyWidgets(mode) } }
+                }
+                Menu("Theme for All Widgets") {
+                    ForEach(WidgetTheme.all) { theme in Button(theme.name) { model.applyTheme(theme, to: model.widgets.map(\.id)) } }
+                }
+                Divider()
+                Button("Back Up…") { model.exportBackup() }
+                Button("Restore from Backup…") { model.chooseBackupToRestore() }
+                Divider()
                 Button("Command Center") { CommandCenterController.shared.toggle() }.keyboardShortcut("k", modifiers: .command)
             }
         }
@@ -106,10 +116,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) { AppModel.shared.shutdown() }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        for url in urls where url.pathExtension == WidgetPackage.fileExtension || url.pathExtension == "json" {
-            AppModel.shared.importWidget(from: url)
+        var showWindow = false
+        for url in urls {
+            if url.scheme?.lowercased() == DeepLinkCommand.scheme {
+                if let command = DeepLinkCommand.parse(url) {
+                    let outcome = AppModel.shared.perform(command)
+                    AppModel.shared.diagnostics.log(.info, .app, "URL command: \(outcome)")
+                } else {
+                    AppModel.shared.diagnostics.log(.warning, .security, "Ignored unrecognised URL command")
+                }
+            } else if url.pathExtension == WidgetPackage.fileExtension || url.pathExtension == "json" {
+                AppModel.shared.importWidget(from: url)
+                showWindow = true
+            }
         }
-        AppDelegate.showMainWindow()
+        if showWindow { AppDelegate.showMainWindow() }
     }
 }
 

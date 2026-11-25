@@ -8,6 +8,17 @@
 	<string>Calendar widgets you add can list your upcoming events.</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>The Media Controls widget sends play, pause and skip commands to Music.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.widgetforge.app.command</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>widgetforge</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>

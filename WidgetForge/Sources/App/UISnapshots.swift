@@ -28,7 +28,7 @@ enum UISnapshots {
                 created.append((template.name, widget.id))
             }
             // Give the stateful templates something to show, through the same state path the UI uses.
-            func set(_ name: String, _ key: String, _ value: JSONValue) {
+            @MainActor func set(_ name: String, _ key: String, _ value: JSONValue) {
                 if let id = created.first(where: { $0.name == name })?.id { model.runtime(for: id)?.setState(key, value) }
             }
             set("Notes", "text", "Ship WidgetForge\nCall the dentist")

@@ -282,6 +282,19 @@ struct MyWidgetsView: View {
                 } label: { Label("Arrange", systemImage: "align.horizontal.left") }
                 .disabled(selection.count < 2)
                 .fixedSize()
+                Menu {
+                    ForEach(TileMode.allCases, id: \.self) { mode in
+                        Button { model.tidyWidgets(mode) } label: { Label(mode.title, systemImage: mode.symbol) }
+                    }
+                } label: { Label("Tidy Up", systemImage: "rectangle.3.group") }
+                .fixedSize()
+                .help("Pack all visible, unlocked widgets into neat rows or columns")
+                Menu {
+                    ForEach(WidgetTheme.all) { theme in
+                        Button { model.applyTheme(theme, to: selection.isEmpty ? model.widgets.map(\.id) : Array(selection)) } label: { Label(theme.name, systemImage: theme.symbol) }
+                    }
+                } label: { Label(selection.isEmpty ? "Theme All" : "Theme Selection", systemImage: "paintpalette") }
+                .fixedSize()
                 Button { model.setEditMode(!model.isEditMode) } label: { Label(model.isEditMode ? "Done" : "Edit on Desktop", systemImage: "hand.draw") }
             }
         } content: {

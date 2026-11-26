@@ -114,6 +114,37 @@ Rate values are `null` until two samples exist; `battery.level` is `null` on Mac
 `media` (`command`: `playpause`/`next`/`previous`), `trigger` (`name`; fires a "widget interaction"
 automation), `script` (`name`; calls a script action).
 
+## Controlling WidgetForge from outside
+
+**URL scheme.** Open these from Terminal (`open "widgetforge://toggle"`), scripts or launchers:
+
+| Link | Effect |
+| --- | --- |
+| `widgetforge://show` · `hide` · `toggle` | show, hide or toggle all widgets |
+| `widgetforge://edit?on=1` | Edit mode on (`on=0` off) |
+| `widgetforge://pause` · `resume` | pause or resume all updates |
+| `widgetforge://profile?name=Work` | switch profile (no name = All Widgets) |
+| `widgetforge://theme?name=Midnight` | apply a theme to every widget |
+| `widgetforge://tidy?edge=left` | tidy up (`left`, `right`, `top`, `bottom`) |
+| `widgetforge://open?section=diagnostics` | open a main-window section |
+| `widgetforge://command-center` | open the Command Center |
+| `widgetforge://run?name=High%20CPU` | run an automation (**asks first**) |
+| `widgetforge://add?template=CPU%20Monitor` | add a built-in template (**asks first**) |
+
+Any app or web page can open a URL, so the scheme cannot import files, change permissions or read
+anything, and the two commands that add or run something require confirmation.
+
+**Shortcuts.** The app provides *Show or Hide Widgets*, *Switch Widget Profile*, *Apply Widget Theme*,
+*Tidy Up Widgets* and *Run WidgetForge Automation* actions.
+
+## Automation triggers
+
+`timer`, `appLaunch`, `appActivate`, `networkChange`, `batteryBelow`, `widgetInteraction`,
+`dataCondition` (a widget's data makes a condition true), `metricSustained` (a system-metric condition such
+as `cpu.usage > 0.9` holds for N seconds without interruption; fires once per episode) and `manual`.
+Conditions use the same `{path, op, value}` form as `visibleWhen`; for `metricSustained` the path starts
+with a metric name (`cpu.usage`, `memory.usage`, `storage.usage`, `battery.level`, `network.downBytesPerSec`).
+
 ## Permissions
 
 ```json

@@ -26,6 +26,11 @@ Unit tests never touch the real network: HTTP goes through `MockTransport`, WebS
 | Templates | `TemplateTests` | 25 unique, all validate, all declare what they use, Codable round trip, setup instructions, no sample data |
 | AI builder | `AIGeneratorTests` | fenced JSON extraction, script stripping, permission recomputation, invalid/unsafe output, request shape, disabled/missing key never calls out, service errors |
 | Core | `JSONAndTemplateTests`, `SharedSnapshotTests` | JSON paths, placeholders and filters, conditions, node decoding, actions, fuzzy search, diagnostics, CSV, WidgetKit snapshot hand-off |
+| Themes and Tidy Up | `ThemeAndTidyTests` | themes change looks only and keep widgets valid; tiling never overlaps or leaves the screen in all four modes; locks, hidden widgets and multiple displays |
+| Backup | `BackupTests` | round trip, credentials never written, state kept, scripts restored untrusted, grants cannot exceed the manifest, foreign/oversized/future/invalid files rejected, store and profiles replaced and persisted |
+| Sustained trigger | `SustainedTriggerTests` | fires only after the condition has held, dips reset it, once per episode, re-arms, other events ignored |
+| URL scheme | `DeepLinkTests` | every command, rejection of everything else, which commands need confirmation |
+| Regressions from the UI review | `PolishRegressionTests` | resize keeps anchored edges, setup flag, duration text, no bare units |
 | Real metrics | `SystemMetricsTests` | reads the actual machine and checks plausibility (ranges, core count, total memory, no fabricated battery) |
 
 ## Self-test of the built app
@@ -33,6 +38,13 @@ Unit tests never touch the real network: HTTP goes through `MockTransport`, WebS
 resizes a widget through the store, toggles edit mode, and prints a JSON report: overlay window levels and
 visibility, runtime count, measured idle CPU and memory, update latency, a real metrics sample, and any
 logged errors. CI runs it and takes a screenshot. Results are recorded in `PROGRESS.md`.
+
+## UI snapshots of the built app
+`WidgetForge --ui-snapshots` (run by CI after the self-test) adds a live instance of every template, renders
+each widget, every main-window section, the builder and the Command Center to PNG, and drives Edit-mode
+move and resize with synthesized mouse events. The images are uploaded in the `WidgetForge` artifact under
+`snapshots/`; a selection is in `docs/images/`. Reviewing them is how the layout bugs listed in
+`PROGRESS.md` were found. They are pictures, not assertions: a person (or reviewer) has to look at them.
 
 ## What is not automated
 SwiftUI views, the edit overlay's mouse handling, the Builder canvas gestures, the Command Center and the

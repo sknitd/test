@@ -35,6 +35,18 @@ someone does, treat these as untested:
   but not built.
 - Widget files are checksummed against corruption, not signed. There is no publisher identity.
 
+## Limits of the newer features
+- **Backups** are plain JSON, not encrypted, and include your widget state (notes, to-dos). They exclude
+  secrets and file choices, so API keys and file data sources must be set up again after a restore.
+  Restore replaces the whole setup; there is no merge.
+- **Tidy Up** keeps widget order and sizes and packs greedily; it does not try to minimise empty space,
+  and widgets that cannot fit on a display are clamped (they may overlap in that case).
+- **Themes** restyle the container only. A component with its own explicit colours keeps them.
+- **Sustained-metric triggers** are evaluated on metric samples (every 1–10 s), so durations are accurate
+  to one sampling interval, and they only run while WidgetForge is running and not paused.
+- **URL scheme and Shortcuts actions** are unit-tested as a parser and compiled, but have not been invoked
+  from Shortcuts or a browser by anyone.
+
 ## Product gaps
 - **Marketplace is local only**: a library plus import/export of `.wfwidget` files. No online catalogue.
 - **Builder edits absolute (canvas) layouts.** Flow-layout widgets (most templates) open wrapped as one

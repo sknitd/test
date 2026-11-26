@@ -43,6 +43,14 @@ Overlay windows are not WidgetKit widgets and are never described as such. See
   set-state actions; cooldowns, edge triggering and loop protection.
 - **Profiles**: Work / Development / Personal / Focus style desktops, switched by hand, time, frontmost
   app or connected display, with automatic restoration.
+- **Themes**: Glass, Midnight, Paper, Neon, Graphite and Minimal looks, applied to one widget, a selection
+  or everything.
+- **Tidy Up**: pack all visible widgets on each display into neat columns or rows without overlap.
+- **Backup and restore**: one `.wfbackup` file with widgets, their state, layouts, profiles, automations,
+  library and settings (never secrets).
+- **Sustained-metric alerts**: an automation trigger such as "CPU above 90% for 60 seconds".
+- **Shortcuts and URL control**: `widgetforge://` links and Shortcuts actions for showing, hiding,
+  theming, tidying, switching profile and running automations.
 - **Command Center** (⌃⌥Space): fuzzy search over widgets, templates, profiles, automations and commands.
 - **Security**: declarative by default, per-widget permission manifests, host allowlists, Keychain
   secrets bound to hosts, validated imports, scripts disabled until trusted. See

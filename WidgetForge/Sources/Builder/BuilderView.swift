@@ -41,15 +41,15 @@ struct BuilderView: View {
             toolbar
             Divider()
             HSplitView {
-                BuilderPalette(model: model).frame(minWidth: 170, idealWidth: 190, maxWidth: 230)
+                BuilderPalette(model: model).frame(minWidth: 150, idealWidth: 170, maxWidth: 220)
                 VSplitView {
                     BuilderCanvas(model: model, preview: preview)
                         .frame(minHeight: 260)
                     BuilderBottomPanel(model: model, tab: $bottomTab, preview: preview)
                         .frame(minHeight: 150, idealHeight: 210)
                 }
-                .frame(minWidth: 420)
-                BuilderInspector(model: model, preview: preview).frame(minWidth: 250, idealWidth: 280, maxWidth: 340)
+                .frame(minWidth: 330)
+                BuilderInspector(model: model, preview: preview).frame(minWidth: 250, idealWidth: 270, maxWidth: 340)
             }
         }
         .task(id: PreviewKey(document: model.document, on: model.isPreviewing, script: model.runScriptInPreview)) {
@@ -87,7 +87,7 @@ struct BuilderView: View {
     private var toolbar: some View {
         HStack(spacing: 10) {
             TextField("Widget name", text: Binding(get: { model.document.name }, set: { name in model.mutate { $0.name = name } }))
-                .textFieldStyle(.roundedBorder).frame(width: 180)
+                .textFieldStyle(.roundedBorder).frame(minWidth: 90, idealWidth: 160, maxWidth: 180)
             Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward") }.disabled(!model.canUndo).help("Undo (⌘Z)")
             Button { model.redo() } label: { Image(systemName: "arrow.uturn.forward") }.disabled(!model.canRedo).help("Redo (⇧⌘Z)")
             Menu {
@@ -117,16 +117,19 @@ struct BuilderView: View {
                 Label("\(model.validation.errors.count) problem(s)", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red).font(.caption)
                     .help(model.validation.errors.joined(separator: "\n"))
             }
-            Toggle(isOn: $model.isPreviewing) { Label("Live Preview", systemImage: "play.fill") }.toggleStyle(.button)
-                .help("Run with real data and make the widget interactive")
+            Toggle(isOn: $model.isPreviewing) { Image(systemName: model.isPreviewing ? "stop.fill" : "play.fill") }.toggleStyle(.button)
+                .help("Live Preview: run with real data and make the widget interactive")
+                .accessibilityLabel("Live Preview")
             Menu {
                 Button("Save to Library") { save(toLibrary: true) }
                 Button("Export…") { app.exportWidget(model.exportDefinition()) }
                 Button("Close Builder") { app.builderDocument = nil; app.builderWidgetID = nil }
             } label: { Image(systemName: "ellipsis.circle") }
             .fixedSize()
-            Button(widgetID == nil ? "Add to Desktop" : "Save Widget") { save(toLibrary: false) }
+            Button(widgetID == nil ? "Add" : "Save") { save(toLibrary: false) }
                 .buttonStyle(.borderedProminent)
+                .fixedSize()
+                .help(widgetID == nil ? "Add this widget to your desktop and library" : "Save changes to the widget on your desktop")
                 .disabled(!model.validation.isValid)
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
@@ -732,9 +735,9 @@ struct BuilderBottomPanel: View {
                 Picker("", selection: $tab) {
                     ForEach(BuilderView.BottomTab.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                 }
-                .pickerStyle(.segmented).labelsHidden().frame(width: 380)
+                .pickerStyle(.segmented).labelsHidden().frame(maxWidth: 360)
                 Spacer()
-                if tab == .console { Button("Clear") { model.clearConsole() }.controlSize(.small) }
+                if tab == .console { Button("Clear") { model.clearConsole() }.controlSize(.small).fixedSize() }
             }
             .padding(6)
             Divider()

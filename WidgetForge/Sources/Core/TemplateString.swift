@@ -140,8 +140,8 @@ enum Formatters {
         let h = s / 3600; s %= 3600
         let m = s / 60; s %= 60
         if d > 0 { return "\(d)d \(h)h \(m)m" }
-        if h > 0 { return "\(h)h \(m)m" }
-        if m > 0 { return "\(m)m \(s)s" }
+        if h > 0 { return m == 0 ? "\(h)h" : "\(h)h \(m)m" }
+        if m > 0 { return s == 0 ? "\(m)m" : "\(m)m \(s)s" }
         return "\(s)s"
     }
 

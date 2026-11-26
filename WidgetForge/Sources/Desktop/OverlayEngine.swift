@@ -359,7 +359,7 @@ final class EditOverlayView: NSView {
         var rect: Rect
         if let activeHandle {
             rect = LayoutEngine.resize(dragStartRect, handle: activeHandle, dx: dx, dy: dy, minWidth: 80, minHeight: 48)
-            if host.settings.snapToGrid { rect = LayoutEngine.snap(rect, grid: host.settings.gridSize, snapSize: true) }
+            if host.settings.snapToGrid { rect = LayoutEngine.snapResize(rect, from: dragStartRect, handle: activeHandle, grid: host.settings.gridSize) }
         } else {
             rect = dragStartRect.offset(dx: dx, dy: dy)
             if host.settings.showAlignmentGuides, !event.modifierFlags.contains(.command) {

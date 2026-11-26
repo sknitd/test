@@ -183,6 +183,18 @@ enum LayoutEngine {
         return r
     }
 
+    /// Snap a resize to the grid by moving only the edges the handle controls; the opposite edges stay exactly
+    /// where they were, even if they were not on the grid to begin with.
+    static func snapResize(_ rect: Rect, from original: Rect, handle: ResizeHandle, grid: Double, minWidth: Double = 8, minHeight: Double = 8) -> Rect {
+        guard grid > 0 else { return rect }
+        var minX = rect.minX, maxX = rect.maxX, minY = rect.minY, maxY = rect.maxY
+        if handle.movesLeft { minX = min(snap(minX, grid: grid), original.maxX - minWidth) } else { minX = original.minX }
+        if handle.movesRight { maxX = max(snap(maxX, grid: grid), original.minX + minWidth) } else if !handle.movesLeft { maxX = original.maxX } else { maxX = original.maxX }
+        if handle.movesTop { minY = min(snap(minY, grid: grid), original.maxY - minHeight) } else { minY = original.minY }
+        if handle.movesBottom { maxY = max(snap(maxY, grid: grid), original.minY + minHeight) } else { maxY = original.maxY }
+        return Rect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+    }
+
     /// Reposition a canvas child when its parent goes from `oldSize` to `newSize`.
     static func applyConstraints(_ frame: Rect, _ c: NodeConstraints, oldSize: WidgetSize, newSize: WidgetSize) -> Rect {
         var r = frame

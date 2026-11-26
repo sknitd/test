@@ -443,11 +443,11 @@ struct DiagnosticsView: View {
                     LabeledContent("Cache hits", value: "\(stats.cacheHits)")
                     LabeledContent("Received", value: Formatters.bytes(Double(stats.bytesReceived)))
                 }
-                Card(title: "Timings") {
-                    timingRow("Widget update latency", timings["widget.updateLatency"])
-                    timingRow("Script run (update + render)", timings["script.run"])
-                    LabeledContent("Script watchdog", value: ScriptRuntime.watchdogAvailable ? "Available" : "Unavailable (scripts disabled)")
-                }
+            }
+            Card(title: "Timings") {
+                timingRow("Widget update latency (data arrival → views)", timings["widget.updateLatency"])
+                timingRow("Script run (update + render, wall clock)", timings["script.run"])
+                LabeledContent("Script watchdog", value: ScriptRuntime.watchdogAvailable ? "Available" : "Unavailable (scripts disabled)")
             }
             Card(title: "Overlay Windows") {
                 if windows.isEmpty { Text("No widget windows").foregroundStyle(.secondary) }
@@ -475,7 +475,12 @@ struct DiagnosticsView: View {
     }
 
     private func timingRow(_ title: String, _ timing: TimingStats?) -> some View {
-        LabeledContent(title, value: timing.map { $0.count == 0 ? "no samples" : String(format: "avg %.2f ms · p95 %.2f ms · max %.2f ms (n=%d)", $0.average * 1000, $0.p95 * 1000, $0.max * 1000, $0.count) } ?? "no samples")
+        HStack(alignment: .firstTextBaseline) {
+            Text(title)
+            Spacer(minLength: 12)
+            Text(timing.map { $0.count == 0 ? "no samples" : String(format: "mean %.1f ms · p95 %.1f ms · max %.1f ms · n=%d", $0.average * 1000, $0.p95 * 1000, $0.max * 1000, $0.count) } ?? "no samples")
+                .font(.callout.monospacedDigit()).foregroundStyle(.secondary).lineLimit(1)
+        }
     }
 
     private func refresh() {

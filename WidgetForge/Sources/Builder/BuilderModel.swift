@@ -310,7 +310,7 @@ final class BuilderModel: ObservableObject {
         }
         guard let start = dragOrigin?[id] else { return }
         var rect = LayoutEngine.resize(start, handle: handle, dx: Double(translation.width), dy: Double(translation.height), minWidth: 12, minHeight: 8)
-        if snapToGrid { rect = LayoutEngine.snap(rect, grid: gridSize, snapSize: true) }
+        if snapToGrid { rect = LayoutEngine.snapResize(rect, from: start, handle: handle, grid: gridSize) }
         document.root.update(id) { $0.frame = NodeFrame(rect) }
     }
 

@@ -36,17 +36,17 @@ enum TemplateLibrary {
     private static func zoneRow(_ index: Int) -> WidgetNode {
         .row([
             .column(spacing: 0, [
-                .text("{{settings.city\(index)}}", size: 13, weight: "medium"),
+                .text("{{settings.city\(index)}}", size: 13, weight: "medium", lineLimit: 1),
                 WidgetNode(.date, props: ["format": "EEE, MMM d", "timezone": .string("{{settings.zone\(index)}}"), "fontSize": 10, "color": "secondary"]),
             ]),
             .spacer,
-            WidgetNode(.clock, props: ["format": "HH:mm", "timezone": .string("{{settings.zone\(index)}}"), "fontSize": 20, "fontWeight": "semibold", "fontDesign": "rounded"]),
+            WidgetNode(.clock, props: ["format": "HH:mm", "timezone": .string("{{settings.zone\(index)}}"), "fontSize": 19, "fontWeight": "semibold", "fontDesign": "rounded"]),
         ])
     }
 
     static let worldClock = WidgetDefinition(
         name: "World Clock", summary: "Three time zones side by side.", category: "Time", symbol: "globe",
-        size: WidgetSize(240, 190),
+        size: WidgetSize(264, 190),
         root: .column(spacing: 8, [.title("World Clock", symbol: "globe"), zoneRow(1), .divider, zoneRow(2), .divider, zoneRow(3)]),
         settings: ["city1": "San Francisco", "zone1": "America/Los_Angeles", "city2": "London", "zone2": "Europe/London",
                    "city3": "Tokyo", "zone3": "Asia/Tokyo"],
@@ -136,11 +136,13 @@ enum TemplateLibrary {
         symbol: "battery.75percent", size: WidgetSize(260, 190),
         root: .column(spacing: 8, [
             .row([.title("Battery", symbol: "battery.75percent"), .text("{{battery.level | percent}}", size: 22, weight: "semibold", design: "rounded")]),
-            WidgetNode(.progress, props: ["value": "{{battery.level}}", "tint": "green"]),
+            WidgetNode(.progress, props: ["value": "{{battery.level}}", "tint": "green",
+                                          "visibleWhen": ["path": "battery.present", "op": "==", "value": true]]),
             .labeled("Power source", "{{battery.source}}"),
             .labeled("Charging", "{{battery.charging | yesno}}"),
             .labeled("Time remaining", "{{battery.minutesRemaining | mul:60 | duration}}"),
-            .chart("sparkline", values: "{{battery.history}}", color: "green", height: 30, extra: ["yMin": 0, "yMax": 1]),
+            .chart("sparkline", values: "{{battery.history}}", color: "green", height: 30,
+                   extra: ["yMin": 0, "yMax": 1, "visibleWhen": ["path": "battery.present", "op": "==", "value": true]]),
             WidgetNode(.text, props: ["value": "This Mac has no internal battery.", "fontSize": 11, "color": "secondary",
                                       "visibleWhen": ["path": "battery.present", "op": "==", "value": false]]),
         ]),
@@ -188,8 +190,8 @@ enum TemplateLibrary {
             WidgetNode(.weather, props: ["temperature": "{{weather.current.temperature_2m}}", "code": "{{weather.current.weather_code}}",
                                          "high": "{{weather.daily.temperature_2m_max[0]}}", "low": "{{weather.daily.temperature_2m_min[0]}}",
                                          "location": "{{settings.location}}", "unit": "{{weather.current_units.temperature_2m}}"]),
-            .labeled("Wind", "{{weather.current.wind_speed_10m | round:0}} {{weather.current_units.wind_speed_10m}}"),
-            .labeled("Humidity", "{{weather.current.relative_humidity_2m}}%"),
+            .labeled("Wind", "{{weather.current.wind_speed_10m | round:0 | default:–}} {{weather.current_units.wind_speed_10m}}"),
+            .labeled("Humidity", "{{weather.current.relative_humidity_2m | default:–}}{{weather.current_units.relative_humidity_2m}}"),
             .statusNote(source: "weather"),
         ]),
         dataSources: [DataSourceConfig(
@@ -204,8 +206,8 @@ enum TemplateLibrary {
         .row([
             .text("{{settings.symbol\(index)}}", size: 13, weight: "semibold"),
             .spacer,
-            .text("{{quote\(index).c | currency}}", size: 13, weight: "medium", design: "rounded"),
-            .text("{{quote\(index).dp | signed:2}}%", size: 11, color: "secondary", design: "rounded"),
+            .text("{{quote\(index).c | currency}}", size: 13, weight: "medium", design: "rounded", lineLimit: 1),
+            .text("{{quote\(index).dp | signed:2}}%", size: 11, color: "secondary", design: "rounded", lineLimit: 1),
         ])
     }
 
@@ -228,8 +230,8 @@ enum TemplateLibrary {
         .row([
             .text(label, size: 13, weight: "semibold"),
             .spacer,
-            .text("{{crypto.\(id).usd | currency}}", size: 13, weight: "medium", design: "rounded"),
-            .text("{{crypto.\(id).usd_24h_change | signed:1}}%", size: 11, color: "secondary", design: "rounded"),
+            .text("{{crypto.\(id).usd | currency}}", size: 13, weight: "medium", design: "rounded", lineLimit: 1),
+            .text("{{crypto.\(id).usd_24h_change | signed:1}}%", size: 11, color: "secondary", design: "rounded", lineLimit: 1),
         ])
     }
 

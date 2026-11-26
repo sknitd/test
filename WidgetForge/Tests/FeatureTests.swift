@@ -238,3 +238,45 @@ final class DeepLinkTests: XCTestCase {
         }
     }
 }
+
+final class PolishRegressionTests: XCTestCase {
+    func testResizeSnapKeepsTheAnchoredEdges() {
+        // An off-grid widget resized from its bottom-right handle must not move its top-left corner.
+        let original = Rect(x: 101, y: 67, width: 260, height: 110)
+        let dragged = LayoutEngine.resize(original, handle: .bottomRight, dx: 48, dy: 32)
+        let snapped = LayoutEngine.snapResize(dragged, from: original, handle: .bottomRight, grid: 8)
+        XCTAssertEqual(snapped.x, 101); XCTAssertEqual(snapped.y, 67)
+        XCTAssertEqual(snapped.maxX.truncatingRemainder(dividingBy: 8), 0)
+        XCTAssertEqual(snapped.maxY.truncatingRemainder(dividingBy: 8), 0)
+        // From the top-left handle it is the bottom-right corner that stays.
+        let fromTopLeft = LayoutEngine.snapResize(LayoutEngine.resize(original, handle: .topLeft, dx: -20, dy: -10), from: original, handle: .topLeft, grid: 8)
+        XCTAssertEqual(fromTopLeft.maxX, original.maxX); XCTAssertEqual(fromTopLeft.maxY, original.maxY)
+        XCTAssertEqual(fromTopLeft.x.truncatingRemainder(dividingBy: 8), 0)
+        // A side handle changes one dimension only.
+        let fromRight = LayoutEngine.snapResize(LayoutEngine.resize(original, handle: .right, dx: 30, dy: 99), from: original, handle: .right, grid: 8)
+        XCTAssertEqual(fromRight.y, original.y); XCTAssertEqual(fromRight.height, original.height); XCTAssertEqual(fromRight.x, original.x)
+        XCTAssertEqual(LayoutEngine.snapResize(dragged, from: original, handle: .bottomRight, grid: 0), dragged)
+    }
+
+    func testOnlyTemplatesThatReallyNeedInputAreFlagged() {
+        let flagged = Set(TemplateLibrary.all.filter(\.needsSetup).map(\.name))
+        XCTAssertEqual(flagged, ["Weather", "Stock Watchlist", "GitHub Activity", "API Status Monitor", "Server Health Dashboard",
+                                 "Custom REST API", "Shortcut Launcher"])
+    }
+
+    func testDurationsDropZeroTails() {
+        XCTAssertEqual(Formatters.duration(300), "5m")
+        XCTAssertEqual(Formatters.duration(330), "5m 30s")
+        XCTAssertEqual(Formatters.duration(7200), "2h")
+        XCTAssertEqual(Formatters.duration(7260), "2h 1m")
+        XCTAssertEqual(Formatters.duration(30), "30s")
+    }
+
+    func testPlaceholdersNeverRenderABareUnit() {
+        // With no weather data yet, the humidity row must read "–", not "%".
+        let empty = WidgetContextBuilder.context(state: [:], settings: [:], data: [:], statuses: [:])
+        let weather = TemplateLibrary.weather.root.flattened.compactMap { $0.string("value") }.filter { $0.contains("humidity") || $0.contains("wind") }
+        XCTAssertEqual(weather.count, 2)
+        for text in weather { XCTAssertTrue(TemplateRenderer.render(text, context: empty).hasPrefix("–"), text) }
+    }
+}

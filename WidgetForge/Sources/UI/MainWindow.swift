@@ -41,6 +41,40 @@ struct MainWindow: View {
     }
 }
 
+/// A scaled picture of a widget that is actually running, drawn from its live data (not interactive).
+struct LiveThumbnail: View {
+    @ObservedObject var runtime: WidgetRuntime
+    var maxWidth: CGFloat = 170
+    var maxHeight: CGFloat = 110
+
+    var body: some View {
+        let definition = runtime.instance.definition
+        let scale = min(maxWidth / CGFloat(definition.size.width), maxHeight / CGFloat(definition.size.height), 1)
+        WidgetContentView(definition: definition, env: runtime.environment(interactive: false))
+            .frame(width: CGFloat(definition.size.width), height: CGFloat(definition.size.height))
+            .scaleEffect(scale)
+            .frame(width: CGFloat(definition.size.width) * scale, height: CGFloat(definition.size.height) * scale)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+}
+
+/// Live picture when the widget is running, static picture otherwise.
+struct WidgetPicture: View {
+    @EnvironmentObject private var model: AppModel
+    let widget: WidgetInstance
+    var maxWidth: CGFloat = 170
+    var maxHeight: CGFloat = 110
+
+    var body: some View {
+        if let runtime = model.runtime(for: widget.id) {
+            LiveThumbnail(runtime: runtime, maxWidth: maxWidth, maxHeight: maxHeight)
+        } else {
+            WidgetThumbnail(definition: widget.definition, maxWidth: maxWidth, maxHeight: maxHeight)
+        }
+    }
+}
+
 struct SidebarStatus: View {
     @EnvironmentObject private var model: AppModel
     var body: some View {
@@ -194,7 +228,7 @@ struct DashboardView: View {
                     HStack(spacing: 14) {
                         ForEach(model.widgets.filter { !$0.hidden }) { widget in
                             VStack(spacing: 6) {
-                                WidgetThumbnail(definition: widget.definition, maxWidth: 170, maxHeight: 110)
+                                WidgetPicture(widget: widget).frame(height: 110)
                                 Text(widget.name).font(.caption)
                             }
                             .onTapGesture(count: 2) { model.openInBuilder(widget.id) }
@@ -349,7 +383,7 @@ struct MyWidgetsView: View {
                 }))
                 .labelsHidden()
                 .accessibilityLabel("Select \(widget.name)")
-                WidgetThumbnail(definition: widget.definition, maxWidth: 150, maxHeight: 96)
+                WidgetPicture(widget: widget, maxWidth: 150, maxHeight: 96)
                     .frame(width: 150, height: 96)
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
@@ -599,8 +633,10 @@ struct TemplateCard<Actions: View>: View {
                 Text(definition.category).font(.caption2).foregroundStyle(.secondary)
             }
             Text(definition.summary).font(.caption).foregroundStyle(.secondary).lineLimit(2, reservesSpace: true)
-            if let setup = definition.setupInstructions {
-                Label("Setup required", systemImage: "wrench.and.screwdriver").font(.caption2).foregroundStyle(.orange).help(setup)
+            if definition.needsSetup {
+                Label("Setup required", systemImage: "wrench.and.screwdriver").font(.caption2).foregroundStyle(.orange).help(definition.setupInstructions ?? "")
+            } else if let note = definition.setupInstructions {
+                Label("Customisable", systemImage: "slider.horizontal.3").font(.caption2).foregroundStyle(.secondary).help(note)
             }
             PermissionList(manifest: definition.permissions)
             HStack { actions() }

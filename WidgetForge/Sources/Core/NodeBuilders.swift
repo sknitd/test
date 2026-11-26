@@ -22,7 +22,7 @@ extension WidgetNode {
     static func title(_ value: String, symbol: String? = nil) -> WidgetNode {
         var children: [WidgetNode] = []
         if let symbol { children.append(.icon(symbol, size: 13, color: "secondary")) }
-        children.append(.text(value, size: 12, weight: "semibold", color: "secondary"))
+        children.append(.text(value, size: 12, weight: "semibold", color: "secondary", lineLimit: 1))
         children.append(.spacer)
         return .row(spacing: 6, children)
     }

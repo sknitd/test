@@ -192,6 +192,14 @@ struct WidgetDefinition: Codable, Hashable, Identifiable, Sendable {
         formatVersion = try c.decodeIfPresent(Int.self, forKey: .formatVersion) ?? 1
     }
 
+    /// True when the widget cannot show real content until the user supplies something: an API key, or a
+    /// setting that ships empty (a username, a URL, coordinates). Templates that merely *can* be customised
+    /// are not flagged.
+    var needsSetup: Bool {
+        if dataSources.contains(where: { !$0.secretNames.isEmpty }) { return true }
+        return settings.values.contains { $0.stringValue == "" }
+    }
+
     var hasScript: Bool { !(script ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 }
 

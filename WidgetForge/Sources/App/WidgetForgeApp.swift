@@ -10,7 +10,7 @@ struct WidgetForgeApp: App {
         Window("WidgetForge", id: "main") {
             MainWindow()
                 .environmentObject(model)
-                .frame(minWidth: 980, minHeight: 620)
+                .frame(minWidth: 1000, minHeight: 620)
         }
         .defaultSize(width: 1180, height: 760)
         .commands {
